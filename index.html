@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Factor Pair • LCM • GCF • Quadratic Finder</title>
+  <!-- Polyfill and MathJax for compatibility -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+/* ---------- POLISHED LIGHT THEME ---------- */
+:root{
+  --bg:linear-gradient(135deg,#ffffff 0%,#f5f7fa 100%);
+  --glass:rgba(255,255,255,.55);
+  --accent1:#0ea5e9;   /* sky */
+  --accent2:#6366f1;   /* indigo */
+  --accent3:#10b981;   /* emerald */
+  --text:#1e293b;
+  --subtle:#64748b;
+}
+input[type="number"],
+input[type="text"] {
+  width: 180px;
+  margin: 8px;
+  padding: 15px 20px;
+  font-size: 16px;
+  border: 2px solid var(--accent1) !important;   /* visible icy border */
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text);
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+input[type="number"]:focus,
+input[type="text"]:focus {
+  border-color: var(--accent2) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  text-align:center;
+  padding:20px;
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* ---------- GLOSSY FLOATING SHAPES ---------- */
+.bg-shapes{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+}
+.shape{
+  position:absolute;
+  animation:glowFloat 20s ease-in-out infinite;
+  will-change:transform,opacity;
+  filter:drop-shadow(0 0 6px rgba(255,255,255,.7));
+}
+.glass-circle{
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  background:linear-gradient(145deg,rgba(255,255,255,.9),rgba(255,255,255,.3));
+  border:1px solid rgba(255,255,255,.7);
+  backdrop-filter:blur(4px);
+}
+.glass-diamond{
+  width:44px;
+  height:44px;
+  background:linear-gradient(145deg,var(--accent1),var(--accent2));
+  transform:rotate(45deg);
+  border-radius:8px;
+  opacity:.75;
+}
+.glass-hex{
+  width:46px;
+  height:46px;
+  background:linear-gradient(145deg,var(--accent3),var(--accent1));
+  clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%);
+  opacity:.7;
+}
+.glass-symbol{
+  font-size:26px;
+  font-weight:700;
+  color:var(--accent2);
+  text-shadow:0 0 8px var(--accent2);
+}
+/* randomised positions & delays */
+.shape:nth-child(1){top:8%;left:12%;animation-delay:-3s}
+.shape:nth-child(2){top:24%;left:85%;animation-delay:-7s}
+.shape:nth-child(3){top:70%;left:8%;animation-delay:-12s}
+.shape:nth-child(4){top:45%;left:55%;animation-delay:-2s}
+.shape:nth-child(5){top:82%;left:75%;animation-delay:-18s}
+.shape:nth-child(6){top:15%;left:35%;animation-delay:-5s}
+.shape:nth-child(7){top:60%;left:90%;animation-delay:-15s}
+.shape:nth-child(8){top:30%;left:30%;animation-delay:-25s}
+@keyframes glowFloat{
+  0%{transform:translateY(0) rotate(0deg) scale(1);opacity:.45}
+  25%{transform:translateY(-30px) rotate(90deg) scale(1.08);opacity:.65}
+  50%{transform:translateY(-50px) rotate(180deg) scale(1.15);opacity:.55}
+  75%{transform:translateY(-30px) rotate(270deg) scale(1.08);opacity:.65}
+  100%{transform:translateY(0) rotate(360deg) scale(1);opacity:.45}
+}
+
+/* ---------- TABS ---------- */
+.tabs{
+  display:inline-flex;
+  margin-bottom:30px;
+  background:var(--glass);
+  backdrop-filter:blur(12px);
+  border-radius:20px;
+  padding:8px;
+  box-shadow:0 8px 32px rgba(0,0,0,.08);
+  border:1px solid rgba(255,255,255,.7);
+}
+.tabs button{
+  padding:12px 24px;
+  margin:0 4px;
+  font-size:16px;
+  font-weight:600;
+  background:transparent;
+  color:var(--subtle);
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+.tabs button:hover{background:rgba(255,255,255,.6);color:var(--text)}
+.tabs button.active{background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff}
+
+/* ---------- TAB CONTENT ---------- */
+.tab-content{
+  display:none;
+  background:var(--glass);
+  backdrop-filter:blur(18px);
+  border-radius:24px;
+  padding:40px;
+  box-shadow:0 25px 50px rgba(0,0,0,.06);
+  border:1px solid rgba(255,255,255,.7);
+  max-width:900px;
+  margin:0 auto;
+  transition:all .3s ease;
+}
+.tab-content.active{display:block;animation:slideUp .5s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+.main-box{display:flex;flex-direction:column;align-items:center}
+.main-box h2{
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  font-size:2.2em;
+  margin-bottom:30px;
+  font-weight:700;
+}
+
+/* ---------- INPUTS ---------- */
+input[type="number"],input[type="text"]{
+  width:180px;
+  margin:8px;
+  padding:15px 20px;
+  font-size:16px;
+  border:2px solid transparent;
+  border-radius:12px;
+  background:rgba(255,255,255,.7);
+  color:var(--text);
+  transition:all .3s ease;
+  outline:none;
+}
+input[type="number"]:focus,input[type="text"]:focus{
+  border-color:var(--accent1);
+  box-shadow:0 0 0 3px rgba(14,165,233,.3);
+  transform:translateY(-2px);
+}
+input::placeholder{color:var(--subtle)}
+
+/* ---------- BUTTONS ---------- */
+button.tool-btn{
+  margin:10px;
+  padding:15px 30px;
+  font-size:16px;
+  font-weight:600;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 4px 15px rgba(14,165,233,.3);
+}
+button.tool-btn:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(14,165,233,.5)}
+button.tool-btn:active{transform:translateY(-1px)}
+button.tool-btn:disabled{background:linear-gradient(135deg,#cbd5e1,#94a3b8);cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ---------- TABLES ---------- */
+#pairsTable,.work-table{
+  margin:20px auto;
+  background:rgba(255,255,255,.5);
+  border-radius:15px;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.05);
+}
+#pairsTable td,.work-table td{
+  padding:15px 20px;
+  border-bottom:1px solid rgba(0,0,0,.06);
+  transition:background .3s ease;
+  font-size:18px;
+}
+#pairsTable tr:hover td,.work-table tr:hover td{background:rgba(255,255,255,.7)}
+#pairsTable td:first-child,.work-table td:first-child{text-align:right;color:var(--accent1)}
+#pairsTable td:last-child,.work-table td:last-child{text-align:left;color:var(--accent2)}
+
+/* ---------- QUAD-STEPS ---------- */
+.quad-steps{
+  text-align:left;
+  margin:30px 0;
+  padding:25px;
+  background:linear-gradient(135deg,rgba(14,165,233,.08),rgba(99,102,241,.08));
+  border-radius:15px;
+  border-left:5px solid var(--accent1);
+  box-shadow:0 10px 30px rgba(0,0,0,.03);
+}
+.quad-steps p{margin:15px 0;line-height:1.8;font-size:16px}
+.quad-steps strong{color:#ef4444;font-weight:700}
+.quad-steps em{color:#10b981;font-style:normal;font-weight:700}
+.formula-step{
+  margin:12px 0;
+  padding:10px 15px;
+  background:rgba(255,255,255,.6);
+  border-radius:8px;
+  border-left:3px solid var(--accent1);
+}
+p{margin-top:20px;font-size:18px;font-weight:500}
+#countPara{
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  font-weight:700;
+  font-size:20px;
+}
+#primePara,#lcmPara,#gcfPara{
+  background:rgba(255,255,255,.55);
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 8px 25px rgba(0,0,0,.04);
+  border-left:5px solid var(--accent1);
+  margin:20px 0;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media(max-width:768px){
+  body{padding:10px}
+  .tabs{flex-wrap:wrap}
+  .tabs button{margin:2px;padding:10px 16px;font-size:14px}
+  .tab-content{padding:20px}
+  input[type="number"],input[type="text"]{width:140px;margin:5px}
+  button.tool-btn{padding:12px 20px;margin:5px}
+}
+
+.segmented{
+  display:inline-flex; gap:10px; align-items:center; margin:6px 0 12px;
+  background:var(--glass); padding:6px 10px; border-radius:999px;
+}
+.segmented label{font-weight:600; cursor:pointer}
+.segmented input{margin-right:6px}
+
+.tri-grid{
+  display:grid; gap:16px; margin-top:12px;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+}
+@media (max-width: 980px){
+  .tri-grid{ grid-template-columns: 1fr; }
+}
+.tri-card{
+  background: var(--glass, #f7f7fb);
+  border-radius: 14px; padding: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,.06);
+}
+.work-table{
+  width:100%; border-collapse: collapse; margin-top:6px;
+}
+.work-table td{
+  padding:6px 10px; border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+/* Keep MathJax from bleeding across columns */
+.tri-card mjx-container{
+  display:block !important;
+  max-width:100%;
+  overflow:visible;        /* let the line breaks flow */
+}
+.tri-card mjx-container > svg{
+  max-width:100% !important;
+  height:auto !important;
+}
+
+
+/* General safety for long strings in the cards */
+.quad-steps{ overflow-wrap:anywhere; }
+
+#tab6Content .twocol{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:8px}
+@media (max-width: 900px){ #tab6Content .twocol{grid-template-columns:1fr} }
+/* ---------- Tab 6 Clean Design ---------- */
+.equation-display {
+  background: var(--glass);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.equation-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.form-label {
+  color: var(--subtle);
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 40px;
+}
+
+.math-formula {
+  font-size: 22px;
+  color: var(--accent2);
+  font-weight: 500;
+}
+
+.coef-inputs {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  margin: 30px 0;
+  flex-wrap: wrap;
+}
+
+.coef-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.coef-group label {
+  font-size: 18px;
+  color: var(--accent1);
+  font-weight: 600;
+}
+
+.coef-group input {
+  width: 100px;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .coef-inputs {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ───────── Tabs ───────── -->
+
+<!-- GLOSSY LIGHT FLOATERS -->
+<div class="bg-shapes">
+  <div class="shape glass-circle"></div>
+  <div class="shape glass-diamond"></div>
+  <div class="shape glass-hex"></div>
+  <div class="shape glass-symbol">∑</div>
+  <div class="shape glass-hex"></div>
+  <div class="shape glass-symbol">∫</div>
+  <div class="shape glass-diamond"></div>
+  <div class="shape glass-circle"></div>
+  <div class="shape glass-symbol">Δ</div>
+  <div class="shape glass-hex"></div>
+</div>
+
+
+<div class="tabs">
+  <button id="tab1Btn" class="active" onclick="showTab(1)">Factor & Prime</button>
+  <button id="tab2Btn" onclick="showTab(2)">LCM Finder</button>
+  <button id="tab3Btn" onclick="showTab(3)">GCF Finder</button>
+  <button id="tab4Btn" onclick="showTab(4)">Quadratic Factorer</button>
+  <button id="tab5Btn" onclick="showTab(5)">Radical Simplifier</button>
+  <button id="tab6Btn" onclick="showTab(6)">Vertex Form</button>
+</div>
+
+
+<!-- ───────── Tab 1: Factors Dashboard (3-column) ───────── -->
+<div id="tab1Content" class="tab-content active">
+  <div class="main-box">
+    <h2>Factors Dashboard</h2>
+    <input type="number" id="numberInput" placeholder="Enter a number" min="1" />
+    <button id="factorGoBtn" class="tool-btn" disabled>Compute</button>
+
+    <div class="tri-grid" id="triView">
+      <div class="tri-card">
+        <h3>Prime factorization & factor count</h3>
+        <div id="primeBox" class="quad-steps"></div>
+      </div>
+
+      <div class="tri-card">
+        <h3>Factor pairs</h3>
+        <div id="pairsBox" class="quad-steps"></div>
+      </div>
+
+      <div class="tri-card">
+        <h3>All factors (least to greatest)</h3>
+        <div id="divisorsBox" class="quad-steps"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Tab 2: LCM Finder -->
+<div id="tab2Content" class="tab-content">
+  <div class="main-box">
+    <h2>Least Common Multiple Finder (up to 3 numbers)</h2>
+    <input type="number" id="lcmInput1" placeholder="Number 1" min="1" />
+    <input type="number" id="lcmInput2" placeholder="Number 2" min="1" />
+    <input type="number" id="lcmInput3" placeholder="Number 3 (optional)" min="1" />
+    <div>
+      <!-- Combined button for LCM -->
+      <button id="lcmBtn" class="tool-btn" onclick="computeAndShowLCM()" disabled>Compute LCM with Work</button>
+    </div>
+    <div id="lcmResult"></div>
+  </div>
+</div>
+
+<!-- Tab 3: GCF Finder -->
+<div id="tab3Content" class="tab-content">
+  <div class="main-box">
+    <h2>Greatest Common Factor Finder (up to 3 numbers)</h2>
+    <input type="number" id="gcfInput1" placeholder="Number 1" min="1" />
+    <input type="number" id="gcfInput2" placeholder="Number 2" min="1" />
+    <input type="number" id="gcfInput3" placeholder="Number 3 (optional)" min="1" />
+    <div>
+      <!-- Combined button for GCF -->
+      <button id="gcfBtn" class="tool-btn" onclick="computeAndShowGCF()" disabled>Compute GCF with Work</button>
+    </div>
+    <div id="gcfResult"></div>
+  </div>
+</div>
+
+<!-- ───────── Tab 4: Quadratic Factorer ───────── -->
+<div id="tab4Content" class="tab-content">
+  <div class="main-box">
+    <h2>Quadratic Factorer (ax² + bx + c)</h2>
+    <input type="number" id="quadA" placeholder="a (≠0)" step="any" />
+    <input type="number" id="quadB" placeholder="b" step="any" />
+    <input type="number" id="quadC" placeholder="c" step="any" />
+
+    <!-- 1 button does everything -->
+    <button id="quadBtn" class="tool-btn" onclick="solveAndShow()" disabled>
+      Factor & Show Work
+    </button>
+    <div id="quadResult"></div>
+  </div>
+</div>
+
+<!-- ───────── Tab 5: Radical Simplifier ───────── -->
+<div id="tab5Content" class="tab-content">
+  <div class="main-box">
+    <h2>Radical Simplifier</h2>
+    <input type="number" id="radicalIndex" placeholder="Index/root (default 2)" min="2" step="1" />
+    <input type="text" id="radicalInput" placeholder="Radicand (e.g., 50 or 50/12)" />
+    <button id="simplifyRadicalBtn" class="tool-btn">Simplify</button>
+    <div id="radicalResult"></div>
+  </div>
+</div>
+
+<!-- ───────── Tab 6: Vertex Form Converter ───────── -->
+<div id="tab6Content" class="tab-content">
+  <div class="main-box">
+    <h2>Convert to Vertex Form</h2>
+    
+    <!-- Display the general form equation -->
+    <div class="equation-display">
+      <div class="equation-row">
+        <span class="form-label">From:</span>
+        <span class="math-formula">ax² + bx + c</span>
+      </div>
+      <div class="equation-row">
+        <span class="form-label">To:</span>
+        <span class="math-formula">a(x - h)² + k</span>
+      </div>
+    </div>
+
+    <div class="coef-inputs">
+      <div class="coef-group">
+        <label>a =</label>
+        <input id="coefA" placeholder="9/8" />
+      </div>
+      
+      <div class="coef-group">
+        <label>b =</label>
+        <input id="coefB" placeholder="4/7" />
+      </div>
+      
+      <div class="coef-group">
+        <label>c =</label>
+        <input id="coefC" placeholder="5/6" />
+      </div>
+    </div>
+
+    <button id="toVertexBtn" class="tool-btn" disabled>Convert</button>
+
+    <div id="vertexResult"></div>
+  </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* ---------- Tab Switching ---------- */
+  function showTab(n) {
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(`tab${n}Btn`).classList.add('active');
+  document.getElementById(`tab${n}Content`).classList.add('active');
+  }
+  window.showTab = showTab;
+
+  /* ---------- Common Utilities ---------- */
+  
+  const getFactorPairs = n => {
+    const p = [];
+    for (let i = 1; i <= Math.sqrt(n); i++) if (n % i === 0) p.push([i, n / i]);
+    return p;
+  };
+  const getPrimeFactors = n => {
+    if (n <= 1) return [];
+    const factors = [];
+    let num = n, d = 2;
+    while (num >= 2) {
+      if (num % d === 0) { factors.push(d); num /= d; }
+      else d++;
+    }
+    return factors.length > 0 ? factors : [n];  // Return [n] if n is prime
+  };
+
+  const gcd = (a, b) => b ? gcd(b, a % b) : Math.abs(a);
+
+/* ---------- Tab 1: Factors Dashboard (3-column) ---------- */
+const numInput     = document.getElementById('numberInput');
+const factorGoBtn  = document.getElementById('factorGoBtn');
+const primeBox     = document.getElementById('primeBox');
+const pairsBox     = document.getElementById('pairsBox');
+const divisorsBox  = document.getElementById('divisorsBox');
+
+numInput.addEventListener('input', () => {
+  const ok = +numInput.value > 0;
+  factorGoBtn.disabled = !ok;
+  if (!ok){
+    primeBox.innerHTML = '';
+    pairsBox.innerHTML = '';
+    divisorsBox.innerHTML = '';
+  }
+});
+
+factorGoBtn.addEventListener('click', () => {
+  const n = +numInput.value;
+  if (!n) return;
+  const data = analyseNumber(n);
+  renderColumns(n, data);
+});
+
+function analyseNumber(n){
+  const primes = getPrimeFactors(n);                        // e.g. [2,2,3,5]
+  const expMap = primes.reduce((m,p)=>(m[p]=(m[p]||0)+1,m), {}); // {2:2,3:1,5:1}
+  const exps   = Object.values(expMap);
+  const tau    = exps.length ? exps.reduce((p,e)=>p*(e+1),1) : 1; // divisor count
+  const pairs  = getFactorPairs(n);                          // [[a,b],...]
+  const divisors = Array.from(new Set(pairs.flat())).sort((a,b)=>a-b);
+  const isSquare = Number.isInteger(Math.sqrt(n));
+  return { expMap, exps, tau, pairs, divisors, isSquare };
+}
+
+function expMapToLatex(m){
+  const keys = Object.keys(m).map(Number).sort((a,b)=>a-b);
+  if (!keys.length) return '1';
+  return keys.map(p => {
+    const e = m[p];
+    return e > 1 ? `${p}^{${e}}` : `${p}`;
+  }).join(' \\cdot ');
+}
+
+// Wrap a product across lines: ["4","3","2"] -> "4 \\times 3 \\\\ 2" (every N terms)
+function wrapByTerms(terms, perLine = 4){
+  const out = [];
+  for (let i = 0; i < terms.length; i += perLine){
+    out.push(terms.slice(i, i + perLine).join(' \\times '));
+  }
+  return out.join(' \\\\ ');
+}
+// Prime factorization to simple HTML like: 3<sup>3</sup> · 29
+function expMapToHTML(m){
+  const keys = Object.keys(m).map(Number).sort((a,b)=>a-b);
+  if (!keys.length) return '1';
+  return keys.map(p => {
+    const e = m[p];
+    return e > 1 ? `${p}<sup>${e}</sup>` : `${p}`;
+  }).join(' · ');
+}
+
+function renderColumns(n, {expMap, exps, tau, pairs, divisors, isSquare}){
+  // Column 1: prime factorization + plain multiplication rule (no LaTeX)
+  const pfHtml   = expMapToHTML(expMap);
+  const plusOne  = exps.map(e => e + 1);              // e.g., [4, 2]
+  const product  = plusOne.length ? plusOne.join(' × ') : '1';
+
+  primeBox.innerHTML = `
+    <p><strong>n = ${n}</strong></p>
+    <p>Prime factorization: ${pfHtml}</p>
+    <p><strong>Factor count rule:</strong> add 1 to each prime exponent and multiply.</p>
+    <p><strong>So:</strong> ${product} = ${tau}</p>
+  `;
+
+
+  // Column 2: pairs
+  const tbl = document.createElement('table');
+  tbl.className = 'work-table';
+  pairs.forEach((pr,i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${pr[0]}</td><td>${pr[1]}</td>`;
+    tr.classList.add('fade-in');
+    tr.style.animationDelay = `${i*0.06}s`;
+    tbl.appendChild(tr);
+  });
+  const countPairs = pairs.length * 2 - (isSquare ? 1 : 0);
+  pairsBox.innerHTML = '';
+  pairsBox.appendChild(tbl);
+  const pcount = document.createElement('p');
+  pcount.textContent = `Number of factors: ${countPairs}`;
+  pairsBox.appendChild(pcount);
+
+  // Column 3: all divisors
+  divisorsBox.innerHTML = `
+    <p>${divisors.join(', ')}</p>
+    <p><em>Total:</em> ${tau}</p>
+  `;
+
+}
+
+
+  /* ---------- Tab 2 & 3: DOM refs + enable/disable wiring ---------- */
+const lcmInputs = [
+  document.getElementById('lcmInput1'),
+  document.getElementById('lcmInput2'),
+  document.getElementById('lcmInput3')
+];
+const lcmBtn  = document.getElementById('lcmBtn');
+const lcmRes  = document.getElementById('lcmResult');
+
+const gcfInputs = [
+  document.getElementById('gcfInput1'),
+  document.getElementById('gcfInput2'),
+  document.getElementById('gcfInput3')
+];
+const gcfBtn  = document.getElementById('gcfBtn');
+const gcfRes  = document.getElementById('gcfResult');
+
+function updateLcmBtn() {
+  const count = lcmInputs.map(i => +i.value).filter(v => v > 0).length;
+  lcmBtn.disabled = count < 2;
+  if (lcmBtn.disabled) lcmRes.innerHTML = '';
+}
+
+function updateGcfBtn() {
+  const count = gcfInputs.map(i => +i.value).filter(v => v > 0).length;
+  gcfBtn.disabled = count < 2;
+  if (gcfBtn.disabled) gcfRes.innerHTML = '';
+}
+
+lcmInputs.forEach(inp => inp.addEventListener('input', updateLcmBtn));
+gcfInputs.forEach(inp => inp.addEventListener('input', updateGcfBtn));
+
+updateLcmBtn();
+updateGcfBtn();
+
+
+ /* ---------- Tab 2: LCM Finder (Improved Colors) ---------- */
+function computeAndShowLCM() {
+  const vals = lcmInputs.map(i => +i.value).filter(v => v > 0);
+  if (vals.length < 2) return;
+  
+  lcmRes.innerHTML = '';
+  const container = document.createElement('div');
+  container.className = 'quad-steps';
+  
+  // Calculate LCM
+  let L = vals[0];
+  for (let i = 1; i < vals.length; i++) {
+    L = (L * vals[i]) / gcd(L, vals[i]);
+  }
+  
+  // Get prime factorizations
+  const maps = vals.map(v => getPrimeFactors(v).reduce((o,p) => (o[p] = (o[p] || 0) + 1, o), {}));
+  const primes = [...new Set(maps.flatMap(m => Object.keys(m)))].map(Number).sort((a,b) => a - b);
+  
+  // Create the factor table
+  const tbl = document.createElement('table');
+  tbl.className = 'work-table';
+  
+  vals.forEach((val, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><strong>${val}</strong> =</td>`;
+    primes.forEach((p, i) => {
+      const e = maps[idx][p] || 0;
+      const td = document.createElement('td');
+      td.innerHTML = e ? `${p}${e > 1 ? `<sup>${e}</sup>` : ''}` : '';
+      
+      // Keep original number black
+      td.style.color = 'var(--text)';
+      
+      // Highlight only the exponents we're taking for LCM
+      if (e > 0 && e === Math.max(...maps.map(m => m[p] || 0))) {
+        td.style.color = 'var(--accent1)';
+        td.style.fontWeight = 'bold';
+      }
+      tr.appendChild(td);
+      if (i < primes.length - 1) {
+        const d = document.createElement('td');
+        d.className = 'dot-cell';
+        d.textContent = '·';
+        d.style.color = 'var(--text)'; // Keep separator black
+        tr.appendChild(d);
+      }
+    });
+    tbl.appendChild(tr);
+  });
+  
+  container.appendChild(tbl);
+  
+  // Add LCM result row
+  const lcmRow = document.createElement('tr');
+  lcmRow.innerHTML = '<td><strong>LCM =</strong></td>';
+  primes.forEach((p, i) => {
+    const maxExp = Math.max(...maps.map(m => m[p] || 0));
+    if (maxExp > 0) {
+      const td = document.createElement('td');
+      td.innerHTML = maxExp > 1 ? `${p}<sup>${maxExp}</sup>` : p;
+      td.style.color = 'var(--accent1)';
+      td.style.fontWeight = 'bold';
+      lcmRow.appendChild(td);
+      
+      if (i < primes.length - 1) {
+        const d = document.createElement('td');
+        d.className = 'dot-cell';
+        d.textContent = '·';
+        d.style.color = 'var(--text)'; // Keep separator black
+        lcmRow.appendChild(d);
+      }
+    }
+  });
+  tbl.appendChild(lcmRow);
+  
+  // Add explanation
+  const explanation = document.createElement('p');
+  explanation.style.marginTop = '20px';
+  explanation.innerHTML = `<strong>Explanation:</strong> For each prime factor, we take the <span style="color: var(--accent1); font-weight: bold">highest power</span> that appears in any number.`;
+  
+  // Add final result
+  const result = document.createElement('p');
+  result.id = 'lcmPara';
+  result.style.marginTop = '15px';
+  result.innerHTML = `LCM of <strong>${vals.join(', ')}</strong> is <strong>${L}</strong>.`;
+  
+  container.appendChild(explanation);
+  container.appendChild(result);
+  lcmRes.appendChild(container);
+}
+
+/* ---------- Tab 3: GCF Finder (Improved Colors) ---------- */
+function computeAndShowGCF() {
+  const v = gcfInputs.map(i => +i.value).filter(n => n > 0);
+  if (v.length < 2) return;
+  
+  gcfRes.innerHTML = '';
+  const container = document.createElement('div');
+  container.className = 'quad-steps';
+  
+  // Calculate GCF
+  let G = v[0];
+  for (let i = 1; i < v.length; i++) {
+    G = gcd(G, v[i]);
+  }
+  
+  // Get prime factorizations
+  const maps = v.map(n => getPrimeFactors(n).reduce((o,p) => (o[p] = (o[p] || 0) + 1, o), {}));
+  const primes = [...new Set(maps.flatMap(m => Object.keys(m)))].map(Number).sort((a,b) => a - b);
+  const commonPrimes = primes.filter(p => maps.every(m => m[p] > 0));
+  
+  // Create the factor table
+  const tbl = document.createElement('table');
+  tbl.className = 'work-table';
+  
+  v.forEach((val, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><strong>${val}</strong> =</td>`;
+    primes.forEach((p, i) => {
+      const e = maps[idx][p] || 0;
+      const td = document.createElement('td');
+      td.innerHTML = e ? `${p}${e > 1 ? `<sup>${e}</sup>` : ''}` : '';
+      
+      // Keep original number black
+      td.style.color = 'var(--text)';
+      
+      // Highlight only the exponents we're taking for GCF
+      if (commonPrimes.includes(p) && e === Math.min(...maps.map(m => m[p] || 0))) {
+        td.style.color = 'var(--accent3)';
+        td.style.fontWeight = 'bold';
+      }
+      tr.appendChild(td);
+      if (i < primes.length - 1) {
+        const d = document.createElement('td');
+        d.className = 'dot-cell';
+        d.textContent = '·';
+        d.style.color = 'var(--text)'; // Keep separator black
+        tr.appendChild(d);
+      }
+    });
+    tbl.appendChild(tr);
+  });
+  
+  container.appendChild(tbl);
+  
+  // Add GCF result row (only if common primes exist)
+  if (commonPrimes.length > 0) {
+    const gcfRow = document.createElement('tr');
+    gcfRow.innerHTML = '<td><strong>GCF =</strong></td>';
+    commonPrimes.forEach((p, i) => {
+      const minExp = Math.min(...maps.map(m => m[p] || 0));
+      const td = document.createElement('td');
+      td.innerHTML = minExp > 1 ? `${p}<sup>${minExp}</sup>` : p;
+      td.style.color = 'var(--accent3)';
+      td.style.fontWeight = 'bold';
+      gcfRow.appendChild(td);
+      
+      if (i < commonPrimes.length - 1) {
+        const d = document.createElement('td');
+        d.className = 'dot-cell';
+        d.textContent = '·';
+        d.style.color = 'var(--text)'; // Keep separator black
+        gcfRow.appendChild(d);
+      }
+    });
+    tbl.appendChild(gcfRow);
+  }
+  
+  // Add explanation
+  const explanation = document.createElement('p');
+  explanation.style.marginTop = '20px';
+  explanation.innerHTML = `<strong>Explanation:</strong> For each <span style="color: var(--accent3); font-weight: bold">common prime factor</span>, we take the <span style="color: var(--accent3); font-weight: bold">lowest power</span> that appears in all numbers.`;
+  
+  // Add final result
+  const result = document.createElement('p');
+  result.id = 'gcfPara';
+  result.style.marginTop = '15px';
+  result.innerHTML = `GCF of <strong>${v.join(', ')}</strong> is <strong>${G}</strong>.`;
+  
+  container.appendChild(explanation);
+  container.appendChild(result);
+  gcfRes.appendChild(container);
+}
+
+/* ---------- Tab 4 (Quadratic) ---------- */
+const quadA = document.getElementById('quadA');
+const quadB = document.getElementById('quadB');
+const quadC = document.getElementById('quadC');
+const quadBtn = document.getElementById('quadBtn');
+const quadRes = document.getElementById('quadResult');
+
+// helper utilities
+
+const isPerfectSquare = n => n >= 0 && Number.isInteger(Math.sqrt(n));
+const factorOutGCD = (a, b, c) => {
+  let g = gcd(Math.abs(a), gcd(Math.abs(b), Math.abs(c)));
+  if (a < 0) g = -g;
+  return g;
+};
+
+// Improved fraction simplification
+const simplifyFraction = (n, d) => {
+  const g = gcd(Math.abs(n), Math.abs(d));
+  const sign = (n < 0) !== (d < 0) ? -1 : 1;
+  return { 
+    numerator: sign * Math.abs(n) / g, 
+    denominator: Math.abs(d) / g 
+  };
+};
+
+// Format a fraction nicely
+const formatFraction = (frac) => {
+  if (frac.denominator === 1) {
+    return frac.numerator.toString();
+  }
+  return `\\frac{${frac.numerator}}{${frac.denominator}}`;
+};
+// GCD across three integers (keep denominator positive later)
+const gcd3 = (a, b, c) => gcd(Math.abs(a), gcd(Math.abs(b), Math.abs(c)));
+
+// Build a simplified ± radical fraction.
+// p +/− q * ( √r or i√r ), all over s, with r square-free.
+// Returns LaTeX WITHOUT the outer "x =".
+function irrationalLatex(p, q, r, s, isImag = false){
+  // Reduce common factor across p, q, s
+  let g = gcd3(p, q, s);
+  if (g > 1){ p /= g; q /= g; s /= g; }
+  // Keep denominator positive
+  if (s < 0){ s = -s; p = -p; q = -q; }
+
+  // Build the radical term, hiding coefficient 1
+  let term;
+  if (isImag){
+    // i * sqrt(r) (or just i if r=1)
+    if (r === 1){
+      term = Math.abs(q) === 1 ? 'i' : `${Math.abs(q)}i`;
+    } else {
+      term = `${Math.abs(q) === 1 ? '' : Math.abs(q)}\\,i\\sqrt{${r}}`;
+    }
+  } else {
+    // sqrt(r)
+    term = `${Math.abs(q) === 1 ? '' : Math.abs(q)}\\sqrt{${r}}`;
+  }
+
+  const numerator = p === 0 ? `\\pm ${term}` : `${p} \\pm ${term}`;
+  return s === 1 ? numerator : `\\frac{ ${numerator} }{ ${s} }`;
+}
+
+
+const formatTerm = (r, showOne = true) => {
+  if (r === 0) return '';
+  const sign = r < 0 ? '-' : '+';
+  const abs = Math.abs(r);
+  if (abs === 1) return showOne ? `${sign} ${abs}` : sign === '+' ? '+ ' : '- ';
+  return `${sign} ${abs}`;
+};
+
+const getFactorPair = (product, sum) => {
+  if (product === 0) return [sum, 0];
+  const abs = Math.abs(product);
+  for (let i = 1; i <= Math.sqrt(abs); i++) {
+    if (abs % i === 0) {
+      const j = abs / i;
+      const combos = [[i, j], [i, -j], [-i, j], [-i, -j]];
+      for (const [m, n] of combos) if (m + n === sum && m * n === product) return [m, n];
+    }
+  }
+  return null;
+};
+
+// Helper function to simplify square root
+function simplifySquareRoot(n) {
+  if (n < 0) return null;
+  if (n === 0) return { coefficient: 0, radicand: 1 };
+  
+  let coefficient = 1;
+  let radicand = n;
+  
+  // Find perfect square factors
+  for (let i = Math.floor(Math.sqrt(n)); i > 1; i--) {
+    if (n % (i * i) === 0) {
+      coefficient = i;
+      radicand = n / (i * i);
+      break;
+    }
+  }
+  
+  return { coefficient, radicand };
+}
+
+// Helper function to format factors
+function formatFactor(coef, constant) {
+  let str = '(';
+  if (coef === 1) str += 'x';
+  else if (coef === -1) str += '-x';
+  else str += coef + 'x';
+  
+  if (constant >= 0) str += ' + ' + constant;
+  else str += ' - ' + (-constant);
+  
+  return str + ')';
+}
+
+// Helper function to format inside of group
+function formatInside(coef, constant) {
+  let str = '';
+  if (coef === 1) str = 'x';
+  else if (coef === -1) str = '-x';
+  else str = coef + 'x';
+  
+  if (constant > 0) str += ' + ' + constant;
+  else if (constant < 0) str += ' - ' + (-constant);
+  
+  return str;
+}
+
+// Helper function for AC method
+function tryACMethod(workDiv, a, b, c, g, a1, b1, c1) {
+  const product = a1 * c1;
+  const factors = getFactorPair(product, b1);
+  
+  if (factors) {
+    const [f1, f2] = factors;
+    
+    workDiv.innerHTML += `
+      <p><strong>Case:</strong> Complex Trinomial</p>
+      <p>Find factors of \\(a \\cdot c = ${a1} \\cdot ${c1} = ${product}\\) that sum to \\(b = ${b1}\\)</p>
+      <p>Factors found: ${f1}, ${f2}</p>
+      <p>Decompose middle term: \\(${b1}x = ${f1}x + ${f2}x\\)</p>`;
+    
+    // Show the rewritten expression
+    let rewrittenExpr = `${a1}x^2`;
+    if (f1 >= 0) rewrittenExpr += ` + ${f1}x`;
+    else rewrittenExpr += ` - ${-f1}x`;
+    if (f2 >= 0) rewrittenExpr += ` + ${f2}x`;
+    else rewrittenExpr += ` - ${-f2}x`;
+    if (c1 >= 0) rewrittenExpr += ` + ${c1}`;
+    else rewrittenExpr += ` - ${-c1}`;
+    
+    workDiv.innerHTML += `<p>Rewrite: \\(${rewrittenExpr}\\)</p>`;
+    
+    // Group terms - show grouping clearly
+    let group1 = `${a1}x^2`;
+    if (f1 >= 0) group1 += ` + ${f1}x`;
+    else group1 += ` - ${-f1}x`;
+    
+    let group2 = '';
+    if (f2 >= 0) group2 += `${f2}x`;
+    else group2 += `- ${-f2}x`;  // Fixed: was showing f2 in both cases
+    if (c1 >= 0) group2 += ` + ${c1}`;
+    else group2 += ` - ${-c1}`;
+    
+    // Handle the sign between groups properly
+    const groupSign = (f2 >= 0) ? '+' : '-';
+    const absGroup2 = (f2 >= 0) ? group2 : group2.substring(2); // Remove "- " if negative
+    
+    workDiv.innerHTML += `<p>Group terms: \\((${group1}) ${groupSign} (${absGroup2})\\)</p>`;
+    
+    // Factor each group
+    const gcd1 = gcd(Math.abs(a1), Math.abs(f1));
+    const gcd2 = gcd(Math.abs(f2), Math.abs(c1));
+    
+    // Determine signs for GCDs
+    const sign1 = (a1 < 0) !== (f1 < 0) ? -1 : 1;
+    const sign2 = (f2 < 0) !== (c1 < 0) ? -1 : 1;
+    const finalGcd1 = gcd1 * (a1 < 0 ? -1 : 1);
+    const finalGcd2 = gcd2 * (f2 < 0 ? -1 : 1);
+    
+    const inner1a = a1 / finalGcd1;
+    const inner1b = f1 / finalGcd1;
+    const inner2a = f2 / finalGcd2;
+    const inner2b = c1 / finalGcd2;
+    
+    // Format the factored groups
+    let factored1 = finalGcd1 === 1 ? 'x' : (finalGcd1 === -1 ? '-x' : `${finalGcd1}x`);
+    factored1 += `(${formatInside(inner1a, inner1b)})`;
+    
+    let factored2 = '';
+    if (finalGcd2 === 1) {
+      factored2 = `(${formatInside(inner2a, inner2b)})`;
+    } else if (finalGcd2 === -1) {
+      factored2 = `-(${formatInside(inner2a, inner2b)})`;
+    } else {
+      factored2 = `${finalGcd2}(${formatInside(inner2a, inner2b)})`;
+    }
+    
+    // Show with proper sign between groups
+    const betweenSign = (finalGcd2 >= 0) ? '+' : '';
+    workDiv.innerHTML += `<p>Factor each group: \\(${factored1} ${betweenSign} ${factored2}\\)</p>`;
+    
+    // Check if we have a common factor
+    // Check if we have a common factor
+    if (inner1a === inner2a && inner1b === inner2b) {
+      const commonFactor = formatInside(inner1a, inner1b);
+      const firstTerm = finalGcd1 === 1 ? 'x' : (finalGcd1 === -1 ? '-x' : `${finalGcd1}x`);
+      const secondTerm = finalGcd2;
+      
+      // Format the first factor properly with + or - sign
+      let firstFactor;
+      if (secondTerm >= 0) {
+        firstFactor = `(${firstTerm} + ${secondTerm})`;
+      } else {
+        firstFactor = `(${firstTerm} - ${Math.abs(secondTerm)})`;
+      }
+  
+      let factorization = `${firstFactor}(${commonFactor})`;
+      if (g !== 1) factorization = `${g}${factorization}`;
+      
+      workDiv.innerHTML += `<p>Common factor: \\((${commonFactor})\\)</p>`;
+      workDiv.innerHTML += `<p>Factorization: \\(${factorization} = 0\\)</p>`;
+      
+      // Calculate solutions using simplified fractions
+      const sol1 = simplifyFraction(-finalGcd2, finalGcd1);
+      const sol2 = simplifyFraction(-inner1b, inner1a);
+      
+      workDiv.innerHTML += `<p>Solutions: \\(x = ${formatFraction(sol1)}\\) and \\(x = ${formatFraction(sol2)}\\)</p>`;
+    } else {
+      workDiv.innerHTML += `<p>Error in factoring - using quadratic formula</p>`;
+      computeRoots(workDiv, a, b, c, b**2 - 4*a*c);
+    }
+  } else {
+    computeRoots(workDiv, a, b, c, b**2 - 4*a*c);
+  }
+}
+
+// Helper function to compute and display roots
+// Helper function to compute and display roots (exact + simplified)
+function computeRoots(workDiv, a, b, c, D) {
+  workDiv.innerHTML += `<p><strong>No rational roots found. Using quadratic formula:</strong></p>`;
+  workDiv.innerHTML += `<p class="formula-step">\\(x = \\frac{ -b \\pm \\sqrt{ b^2 - 4ac } }{ 2a }\\)</p>`;
+
+  // Show discriminant calculation
+  workDiv.innerHTML += `<p class="formula-step">Discriminant: \\(D = b^2 - 4ac = ${b}^2 - 4(${a})(${c}) = ${D}\\)</p>`;
+
+  if (D < 0) {
+    // Complex case: exact simplified form with i√(square-free)
+    const Dabs = -D;
+    const { coefficient: k, radicand: r } = simplifySquareRoot(Dabs);
+    const exact = irrationalLatex(-b, k, r, 2*a, true);
+    workDiv.innerHTML += `<p class="formula-step">\\(x = ${exact}\\)</p>`;
+
+    // Also show numeric approximation
+    const realPart = -b/(2*a);
+    const imagPart = Math.sqrt(Dabs)/(2*a);
+    workDiv.innerHTML += `<p class="formula-step">\\(x \\approx ${realPart.toFixed(3)} \\pm ${Math.abs(imagPart).toFixed(3)}i\\)</p>`;
+  } 
+  else if (D === 0) {
+    // Single rational root (already simplified)
+    workDiv.innerHTML += `<p class="formula-step">\\(x = \\frac{ -(${b}) }{ 2(${a}) }\\)</p>`;
+    const simplifiedRoot = simplifyFraction(-b, 2*a);
+    workDiv.innerHTML += `<p class="formula-step">\\(x = ${formatFraction(simplifiedRoot)}\\)</p>`;
+  } 
+  else {
+    // Real roots: perfect-square vs irrational
+    if (isPerfectSquare(D)) {
+      const sqrtD = Math.sqrt(D);
+      workDiv.innerHTML += `<p class="formula-step">\\(x = \\frac{ -(${b}) \\pm ${sqrtD} }{ 2(${a}) }\\)</p>`;
+      const sol1 = simplifyFraction(-b + sqrtD, 2*a);
+      const sol2 = simplifyFraction(-b - sqrtD, 2*a);
+      workDiv.innerHTML += `<p class="formula-step">\\(x_1 = ${formatFraction(sol1)}\\)</p>`;
+      workDiv.innerHTML += `<p class="formula-step">\\(x_2 = ${formatFraction(sol2)}\\)</p>`;
+    } else {
+      // Irrational case: pull square factors and reduce gcd across coefficients
+      const { coefficient: k, radicand: r } = simplifySquareRoot(D);
+      const exact = irrationalLatex(-b, k, r, 2*a, false);
+      workDiv.innerHTML += `<p class="formula-step">\\(x = ${exact}\\)</p>`;
+
+      // Numeric approximations (keep for intuition)
+      const root1 = (-b + Math.sqrt(D))/(2*a);
+      const root2 = (-b - Math.sqrt(D))/(2*a);
+      workDiv.innerHTML += `<p class="formula-step">\\(x_1 \\approx ${root1.toFixed(3)}\\)</p>`;
+      workDiv.innerHTML += `<p class="formula-step">\\(x_2 \\approx ${root2.toFixed(3)}\\)</p>`;
+    }
+  }
+}
+
+
+  // Helper function to format quadratic expression
+  function formatQuadratic(a, b, c) {
+  let str = '';
+  
+  // Handle x² term
+  if (a === 1) str = 'x^2';
+  else if (a === -1) str = '-x^2';
+  else str = a + 'x^2';
+  
+  // Handle x term
+  if (b !== 0) {
+    if (b > 0) {
+      str += ' + ';
+      if (b === 1) str += 'x';
+      else str += b + 'x';
+    } else {
+      str += ' - ';
+      if (b === -1) str += 'x';
+      else str += (-b) + 'x';
+    }
+  }
+  
+    // Handle constant term
+   if (c !== 0) {
+     if (c > 0) {
+        str += ' + ' + c;
+      } else {
+       str += ' - ' + (-c);
+     }
+   }
+  
+    return str;
+  }
+
+  // single button action
+    function solveAndShow() {
+      const [a, b, c] = [quadA, quadB, quadC].map(x => parseFloat(x.value));
+      if (a === 0 || isNaN(b) || isNaN(c)) return;
+
+      quadRes.innerHTML = '';
+      const workDiv = document.createElement('div');
+      workDiv.className = 'quad-steps';
+
+      const D = b ** 2 - 4 * a * c;
+      const g = factorOutGCD(a, b, c);
+      const a1 = a / g, b1 = b / g, c1 = c / g;
+
+      // Display original equation
+      workDiv.innerHTML = `<p>Equation: \\(${formatQuadratic(a, b, c)} = 0\\)</p>`;
+
+      // Show GCF factoring if applicable
+      if (g !== 1) {
+        workDiv.innerHTML += `<p>Factoring out GCF: \\(${g}\\)</p>`;
+        workDiv.innerHTML += `<p>Reduced equation: \\(${formatQuadratic(a1, b1, c1)} = 0\\)</p>`;
+      }
+
+      /* ---------- Case: b = 0 (No linear term) ---------- */
+if (b1 === 0) {
+  if (c1 < 0) {
+    // Check if it can be solved algebraically (not necessarily perfect squares)
+    const absC1 = -c1;
+    const ratioFrac = simplifyFraction(absC1, a1);
+    
+    if (absC1 > 0) {
+      // Check if it's a difference of squares (perfect squares)
+      if (isPerfectSquare(a1) && isPerfectSquare(absC1)) {
+        const rootA = Math.sqrt(a1);
+        const rootC = Math.sqrt(absC1);
+        
+        workDiv.innerHTML += `<p><strong>Case:</strong> Difference of squares</p>`;
+        workDiv.innerHTML += `<p>Pattern: \\(A^2 - B^2 = (A + B)(A - B)\\)</p>`;
+        workDiv.innerHTML += `<p>Here: \\(${a1 === 1 ? '' : a1}x^2 - ${absC1} = (${rootA === 1 ? '' : rootA}x)^2 - ${rootC}^2\\)</p>`;
+        workDiv.innerHTML += `<p>Where \\(A = ${rootA === 1 ? 'x' : rootA + 'x'}\\) and \\(B = ${rootC}\\)</p>`;
+        
+        let factor;
+        if (rootA === 1) {
+          factor = `(x + ${rootC})(x - ${rootC})`;
+        } else {
+          factor = `(${rootA}x + ${rootC})(${rootA}x - ${rootC})`;
+        }
+        const fullFactor = g === 1 ? factor : `${g}${factor}`;
+        workDiv.innerHTML += `<p>Factorization: \\(${fullFactor} = 0\\)</p>`;
+        
+        // Show properly simplified solutions
+        const sol1Frac = simplifyFraction(rootC, rootA);
+        const sol2Frac = simplifyFraction(-rootC, rootA);
+        
+        workDiv.innerHTML += `<p>Solutions: \\(x = ${formatFraction(sol2Frac)}\\) and \\(x = ${formatFraction(sol1Frac)}\\)</p>`;
+            } else {
+  // Not perfect squares - solve algebraically
+  workDiv.innerHTML += `<p><strong>Case:</strong> No linear term</p>`;
+  workDiv.innerHTML += `<p>Move constant to right side: \\(${a1 === 1 ? '' : a1}x^2 = ${absC1}\\)</p>`;
+  
+  // Special handling when a1 = 1
+  if (a1 === 1) {
+    workDiv.innerHTML += `<p>\\(x^2 = ${absC1}\\)</p>`;
+    workDiv.innerHTML += `<p>Take square root: \\(x = \\pm\\sqrt{${absC1}}\\)</p>`;
+    
+    // Simplify the square root if possible
+    const simplified = simplifySquareRoot(absC1);
+    if (simplified.coefficient > 1) {
+      if (simplified.radicand === 1) {
+        workDiv.innerHTML += `<p>\\(x = \\pm${simplified.coefficient}\\)</p>`;
+      } else {
+        workDiv.innerHTML += `<p>\\(x = \\pm${simplified.coefficient}\\sqrt{${simplified.radicand}}\\)</p>`;
+      }
+    }
+    // If there's a GCF, show the factorized form
+    if (g !== 1) {
+      const factorizedExpr = `${g}(x^2 - ${absC1})`;
+      workDiv.innerHTML += `<p>Factorized form: \\(${factorizedExpr} = 0\\)</p>`;
+    }
+  } else {
+    // When a1 ≠ 1, show the division step
+    if (ratioFrac.denominator === 1) {
+      workDiv.innerHTML += `<p>Divide by ${a1}: \\(x^2 = ${ratioFrac.numerator}\\)</p>`;
+      workDiv.innerHTML += `<p>Take square root: \\(x = \\pm\\sqrt{${ratioFrac.numerator}}\\)</p>`;
+      
+      // Simplify if possible
+      const simplified = simplifySquareRoot(ratioFrac.numerator);
+      if (simplified.coefficient > 1) {
+        if (simplified.radicand === 1) {
+          workDiv.innerHTML += `<p>\\(x = \\pm${simplified.coefficient}\\)</p>`;
+        } else {
+          workDiv.innerHTML += `<p>\\(x = \\pm${simplified.coefficient}\\sqrt{${simplified.radicand}}\\)</p>`;
+        }
+      }
+    } else {
+      workDiv.innerHTML += `<p>Divide by ${a1}: \\(x^2 = \\frac{${ratioFrac.numerator}}{${ratioFrac.denominator}}\\)</p>`;
+      workDiv.innerHTML += `<p>Take square root: \\(x = \\pm\\sqrt{\\frac{${ratioFrac.numerator}}{${ratioFrac.denominator}}}\\)</p>`;
+      
+      // Simplify the square root expression
+      workDiv.innerHTML += `<p>\\(x = \\pm\\frac{\\sqrt{${ratioFrac.numerator}}}{\\sqrt{${ratioFrac.denominator}}}\\)</p>`;
+      
+      // Check if numerator and/or denominator are perfect squares
+      const isNumPerfect = isPerfectSquare(ratioFrac.numerator);
+      const isDenomPerfect = isPerfectSquare(ratioFrac.denominator);
+      
+      if (isNumPerfect && isDenomPerfect) {
+        // Both perfect squares
+        const sqrtNum = Math.sqrt(ratioFrac.numerator);
+        const sqrtDenom = Math.sqrt(ratioFrac.denominator);
+        const finalFrac = simplifyFraction(sqrtNum, sqrtDenom);
+        workDiv.innerHTML += `<p>\\(x = \\pm\\frac{${sqrtNum}}{${sqrtDenom}} = \\pm${formatFraction(finalFrac)}\\)</p>`;
+      } else if (isNumPerfect && !isDenomPerfect) {
+        // Only numerator is perfect square
+        const sqrtNum = Math.sqrt(ratioFrac.numerator);
+        workDiv.innerHTML += `<p>\\(x = \\pm\\frac{${sqrtNum}}{\\sqrt{${ratioFrac.denominator}}}\\)</p>`;
+        
+        // Rationalize the denominator
+        workDiv.innerHTML += `<p>Rationalize: \\(x = \\pm\\frac{${sqrtNum}\\sqrt{${ratioFrac.denominator}}}{\\sqrt{${ratioFrac.denominator}} \\cdot \\sqrt{${ratioFrac.denominator}}} = \\pm\\frac{${sqrtNum}\\sqrt{${ratioFrac.denominator}}}{${ratioFrac.denominator}}\\)</p>`;
+      } else if (!isNumPerfect && isDenomPerfect) {
+        // Only denominator is perfect square
+        const sqrtDenom = Math.sqrt(ratioFrac.denominator);
+        workDiv.innerHTML += `<p>\\(x = \\pm\\frac{\\sqrt{${ratioFrac.numerator}}}{${sqrtDenom}}\\)</p>`;
+        
+        // Simplify numerator if possible
+        const simplifiedNum = simplifySquareRoot(ratioFrac.numerator);
+        if (simplifiedNum.coefficient > 1) {
+          if (simplifiedNum.radicand === 1) {
+            const finalFrac = simplifyFraction(simplifiedNum.coefficient, sqrtDenom);
+            workDiv.innerHTML += `<p>\\(x = \\pm${formatFraction(finalFrac)}\\)</p>`;
+          } else {
+            const gcdVal = gcd(simplifiedNum.coefficient, sqrtDenom);
+            if (gcdVal > 1) {
+              const newNum = simplifiedNum.coefficient / gcdVal;
+              const newDenom = sqrtDenom / gcdVal;
+              if (newDenom === 1) {
+                workDiv.innerHTML += `<p>\\(x = \\pm${newNum}\\sqrt{${simplifiedNum.radicand}}\\)</p>`;
+              } else {
+                workDiv.innerHTML += `<p>\\(x = \\pm\\frac{${newNum}\\sqrt{${simplifiedNum.radicand}}}{${newDenom}}\\)</p>`;
+              }
+            } else {
+              workDiv.innerHTML += `<p>\\(x = \\pm\\frac{${simplifiedNum.coefficient}\\sqrt{${simplifiedNum.radicand}}}{${sqrtDenom}}\\)</p>`;
+            }
+          }
+        }
+      } else {
+        // Neither is perfect square - need to rationalize
+        workDiv.innerHTML += `<p>Rationalize: \\(x = \\pm\\frac{\\sqrt{${ratioFrac.numerator} \\cdot ${ratioFrac.denominator}}}{${ratioFrac.denominator}}\\)</p>`;
+        
+        const product = ratioFrac.numerator * ratioFrac.denominator;
+        // Simplify the radical if possible
+        const simplified = simplifySquareRoot(product);
+        if (simplified.coefficient > 1) {
+          workDiv.innerHTML += `<p>\\(x = \\pm\\frac{${simplified.coefficient}\\sqrt{${simplified.radicand}}}{${ratioFrac.denominator}}\\)</p>`;
+          
+          // Check if coefficient and denominator have common factors
+          const gcdVal = gcd(simplified.coefficient, ratioFrac.denominator);
+          if (gcdVal > 1) {
+            const newNum = simplified.coefficient / gcdVal;
+            const newDenom = ratioFrac.denominator / gcdVal;
+            if (newDenom === 1) {
+              workDiv.innerHTML += `<p>\\(x = \\pm${newNum}\\sqrt{${simplified.radicand}}\\)</p>`;
+            } else {
+              workDiv.innerHTML += `<p>\\(x = \\pm\\frac{${newNum}\\sqrt{${simplified.radicand}}}{${newDenom}}\\)</p>`;
+            }
+          }
+        } else {
+          workDiv.innerHTML += `<p>\\(x = \\pm\\frac{\\sqrt{${product}}}{${ratioFrac.denominator}}\\)</p>`;
+        }
+      }
+    }
+    
+    // Show the factorized form if there's a GCF
+    if (g !== 1) {
+      const factorizedExpr = `${g}(${a1 === 1 ? '' : a1}x^2 - ${absC1})`;
+      workDiv.innerHTML += `<p>Factorized form: \\(${factorizedExpr} = 0\\)</p>`;
+    }
+  }
+}}
+  } else if (c1 > 0) {
+  // Sum of squares (no real solutions)
+  workDiv.innerHTML += `<p><strong>Case:</strong> No linear term, positive constant</p>`;
+  workDiv.innerHTML += `<p>Move constant to right side: \\(${a1 === 1 ? '' : a1}x^2 = -${c1}\\)</p>`;
+  
+  const ratioFrac = simplifyFraction(c1, a1);
+  if (ratioFrac.denominator === 1) {
+    workDiv.innerHTML += `<p>Divide by ${a1}: \\(x^2 = -${ratioFrac.numerator}\\)</p>`;
+    workDiv.innerHTML += `<p>Since \\(x^2 < 0\\), there are no real solutions.</p>`;
+    
+    // Use simplified radical form for complex solutions
+    const { coefficient: k, radicand: r } = simplifySquareRoot(ratioFrac.numerator);
+    if (k === 1 && r === 1) {
+      workDiv.innerHTML += `<p>Complex solutions: \\(x = \\pm i\\)</p>`;
+    } else if (r === 1) {
+      workDiv.innerHTML += `<p>Complex solutions: \\(x = \\pm ${k}i\\)</p>`;
+    } else if (k === 1) {
+      workDiv.innerHTML += `<p>Complex solutions: \\(x = \\pm i\\sqrt{${r}}\\)</p>`;
+    } else {
+      workDiv.innerHTML += `<p>Complex solutions: \\(x = \\pm ${k}i\\sqrt{${r}}\\)</p>`;
+    }
+  } else {
+    workDiv.innerHTML += `<p>Divide by ${a1}: \\(x^2 = -\\frac{${ratioFrac.numerator}}{${ratioFrac.denominator}}\\)</p>`;
+    workDiv.innerHTML += `<p>Since \\(x^2 < 0\\), there are no real solutions.</p>`;
+    
+    // Complex solutions with fraction
+    const { coefficient: k, radicand: r } = simplifySquareRoot(ratioFrac.numerator);
+    const { coefficient: dk, radicand: dr } = simplifySquareRoot(ratioFrac.denominator);
+    
+    if (dr === 1) {
+      // Denominator is perfect square
+      const simplified = simplifyFraction(k, dk);
+      if (r === 1) {
+        workDiv.innerHTML += `<p>Complex solutions: \\(x = \\pm ${formatFraction(simplified)}i\\)</p>`;
+      } else {
+        if (simplified.denominator === 1) {
+          const coef = simplified.numerator === 1 ? '' : simplified.numerator;
+          workDiv.innerHTML += `<p>Complex solutions: \\(x = \\pm ${coef}i\\sqrt{${r}}\\)</p>`;
+        } else {
+          workDiv.innerHTML += `<p>Complex solutions: \\(x = \\pm \\frac{${simplified.numerator === 1 ? '' : simplified.numerator}i\\sqrt{${r}}}{${simplified.denominator}}\\)</p>`;
+        }
+      }
+    } else {
+      // General case
+      workDiv.innerHTML += `<p>Complex solutions: \\(x = \\pm \\frac{${k === 1 ? '' : k}i\\sqrt{${r * dr}}}{${ratioFrac.denominator}}\\)</p>`;
+    }
+  }
+} else {
+    // c1 = 0, so we have ax² = 0
+    workDiv.innerHTML += `<p><strong>Case:</strong> No linear or constant term</p>`;
+    workDiv.innerHTML += `<p>\\(${a1 === 1 ? '' : a1}x^2 = 0\\)</p>`;
+    workDiv.innerHTML += `<p>Solution: \\(x = 0\\)</p>`;
+  }
+}
+      /* ---------- Case: c = 0 (No constant term) ---------- */
+      else if (c1 === 0) {
+        workDiv.innerHTML += `<p><strong>Case:</strong> No constant term → factor out \\(x\\)</p>`;
+        
+        let innerFactor = '';
+        if (a1 === 1) innerFactor = `x + ${b1}`;
+        else if (a1 === -1) innerFactor = `-x + ${b1}`;
+        else innerFactor = `${a1}x + ${b1}`;
+        
+        const fullFactor = g === 1 ? `x(${innerFactor})` : `${g}x(${innerFactor})`;
+        workDiv.innerHTML += `<p>Factorization: \\(${fullFactor} = 0\\)</p>`;
+        
+        // Show solutions in exact form
+        const sol2Frac = simplifyFraction(-b1, a1);
+        workDiv.innerHTML += `<p>Solutions: \\(x = 0\\) and \\(x = ${formatFraction(sol2Frac)}\\)</p>`;
+      }
+      /* ---------- Perfect Square Trinomial ---------- */
+      else if (Math.abs(b1**2 - 4*a1*c1) < 1e-10 && isPerfectSquare(a1) && isPerfectSquare(c1)) {
+        const sign = b1 > 0 ? '+' : '-';
+        const absB1 = Math.abs(b1);
+        const rootA = Math.sqrt(a1);
+        const rootC = Math.sqrt(c1);
+        
+        // Verify middle term is 2*sqrt(a1)*sqrt(c1)
+        if (Math.abs(2*rootA*rootC - absB1) < 1e-10) {
+          let factor;
+          if (rootA === 1) {
+            factor = `(x ${sign} ${rootC})^2`;
+          } else {
+            factor = `(${rootA}x ${sign} ${rootC})^2`;
+          }
+          const fullFactor = g === 1 ? factor : `${g}${factor}`;
+          workDiv.innerHTML += `
+            <p><strong>Case:</strong> Perfect Square Trinomial</p>
+            <p>Check: \\((\\frac{b}{2})^2 = ac\\)?</p>
+            <p>\\((\\frac{b}{2})^2 = (\\frac{${b1}}{2})^2 = ${(b1/2)**2}\\)</p>
+            <p>\\(ac = ${a1} \\cdot ${c1} = ${a1*c1}\\)</p>
+            <p>Since \\((\\frac{b}{2})^2 = ac\\), this is a perfect square.</p>
+            <p>Pattern: \\(A^2 ${b1 > 0 ? '+' : '-'} 2AB + B^2 = (A ${b1 > 0 ? '+' : '-'} B)^2\\)</p>
+            <p>Where \\(A = ${rootA === 1 ? '' : rootA}x\\) and \\(B = ${rootC}\\)</p>
+            <p>Therefore: \\(${formatQuadratic(a1, b1, c1)} = (${rootA === 1 ? '' : rootA}x ${sign} ${rootC})^2\\)</p>
+            <p>Factorization: \\(${fullFactor} = 0\\)</p>`;
+          
+          // Show solution in exact form
+          const solFrac = simplifyFraction(sign === '+' ? -rootC : rootC, rootA);
+          workDiv.innerHTML += `<p>Solution: \\(x = ${formatFraction(solFrac)}\\)</p>`;
+        } else {
+          tryACMethod(workDiv, a, b, c, g, a1, b1, c1);
+        }
+      }
+      /* ---------- Simple Trinomial (a1=1) ---------- */
+      else if (a1 === 1) {
+        const factors = getFactorPair(c1, b1);
+        if (factors) {
+          const [f1, f2] = factors;
+          const factorStr = `(x${formatTerm(f1)})(x${formatTerm(f2)})`;
+          const fullFactor = g === 1 ? factorStr : `${g}${factorStr}`;
+          workDiv.innerHTML += `
+            <p><strong>Case:</strong> Simple Trinomial</p>
+            <p>Find factors of ${c1} that sum to ${b1}: ${f1}, ${f2}</p>
+            <p>Factorization: \\(${fullFactor} = 0\\)</p>`;
+          
+          // Solutions are already in simplest form for a=1
+          workDiv.innerHTML += `<p>Solutions: \\(x = ${-f1}\\) and \\(x = ${-f2}\\)</p>`;
+        } else {
+          computeRoots(workDiv, a, b, c, D);
+        }
+      }
+      /* ---------- Complex Trinomial (AC Method) ---------- */
+      else {
+        tryACMethod(workDiv, a, b, c, g, a1, b1, c1);
+      }
+      
+      quadRes.appendChild(workDiv);
+      
+      // Wait for MathJax to load before typesetting
+      if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+        MathJax.typeset();
+      } else {
+        // If MathJax isn't ready, wait for it
+        const checkMathJax = () => {
+          if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+            MathJax.typeset();
+          } else {
+            setTimeout(checkMathJax, 100);
+          }
+        };
+        checkMathJax();
+      }
+    }
+  // Add this line to expose the function to the global scope
+  window.solveAndShow = solveAndShow;
+  // Expose Tab 2 & 3 handlers for the inline onclick=""
+window.computeAndShowLCM = computeAndShowLCM;
+window.computeAndShowGCF  = computeAndShowGCF;
+
+
+  /* ---------- enable/disable Tab-4 button ---------- */
+    [quadA, quadB, quadC].forEach(inp =>
+    inp.addEventListener('input', () => {
+      const [a, b, c] = [quadA, quadB, quadC].map(x => {
+        const v = x.value.trim();
+        return v === '' ? NaN : parseFloat(v);
+      });
+      quadBtn.disabled = !(a !== 0 && !isNaN(b) && !isNaN(c));
+      if (quadBtn.disabled) quadRes.innerHTML = '';
+    })
+  );
+
+/* ---------- Tab 5: Radical Simplifier (teaching-first, trimmed) ---------- */
+const radicalIndex = document.getElementById('radicalIndex');
+const radicalInput = document.getElementById('radicalInput');
+const simplifyRadicalBtn = document.getElementById('simplifyRadicalBtn');
+const radicalResult = document.getElementById('radicalResult');
+
+// -------- LaTeX + utility helpers --------
+function formatRadical(index, radicandLatex) {
+  return index === 2 ? `\\sqrt{${radicandLatex}}` : `\\sqrt[${index}]{${radicandLatex}}`;
+}
+
+// prime list -> exponent map
+function toExpMap(factors) {
+  const m = {};
+  factors.forEach(p => m[p] = (m[p] || 0) + 1);
+  return m;
+}
+
+// exponent map -> product integer
+function fromExpMapToInt(m) {
+  return Object.keys(m).reduce((acc, p) => acc * Math.pow(+p, m[p]), 1);
+}
+
+// exponent map -> "2^{3} \cdot 5"
+function expMapToLatex(m) {
+  const parts = Object.keys(m).sort((a, b) => +a - +b).map(p => {
+    const e = m[p];
+    return e > 1 ? `${p}^{${e}}` : `${p}`;
+  });
+  return parts.length ? parts.join(' \\cdot ') : '1';
+}
+
+// exponent map -> repeated, sorted list of primes as strings
+function mapToRepeatedList(m) {
+  const list = [];
+  Object.keys(m).forEach(p => {
+    for (let i = 0; i < m[p]; i++) list.push(p);
+  });
+  return list.sort((a, b) => +a - +b);
+}
+
+// list like ["2","2","3"] -> "2 \cdot 2 \cdot 3"
+function listToProductLatex(list) {
+  return list.length ? list.join(' \\cdot ') : '';
+}
+
+// Reduce positive integers a/b
+function reducePair(a, b) {
+  const g = gcd(a, b);
+  return [a / g, b / g, g];
+}
+
+// Split e = q*index + r; build extraction maps and human-readable lines.
+// Lines are kept for "Group exponents by n" step. No “what comes out/stays in” summary later.
+// Split e = q*index + r; build extraction maps and readable lines.
+// If label is '', lines omit the "From <label>:" prefix entirely.
+function splitByIndex(expMap, index, label) {
+  const outsideMap = {};
+  const insideMap = {};
+  const lines = [];
+  const prefix = label ? (`From ${label}: `) : '';
+
+  Object.keys(expMap).sort((a, b) => +a - +b).forEach(p => {
+    const e = expMap[p];
+    const q = Math.floor(e / index);
+    const r = e % index;
+
+    if (q > 0) outsideMap[p] = (outsideMap[p] || 0) + q;
+    if (r > 0) insideMap[p] = (insideMap[p] || 0) + r;
+
+    const left = e === 1 ? `${p}` : `${p}^{${e}}`;
+
+    if (q === 0) {
+      const rem = r === 1 ? `${p}` : `${p}^{${r}}`;
+      lines.push(`${prefix}\\( ${left} \\Rightarrow \\) Leave \\( ${rem} \\) inside.`);
+    } else if (r === 0) {
+      // Changed: Don't mention "leave 1 inside" - just say what we take out
+      lines.push(`${prefix}\\( ${left} = ${p}^{${index} \\cdot ${q}} \\Rightarrow \\) take out \\( ${p}^{${q}} \\).`);
+    } else {
+      lines.push(`${prefix}\\( ${left} = ${p}^{${index} \\cdot ${q}} \\cdot ${p}^{${r}} \\Rightarrow \\) take out \\( ${p}^{${q}} \\), leave \\( ${p}^{${r}} \\) inside.`);
+    }
+  });
+
+  return { outsideMap, insideMap, stepLines: lines };
+}
+
+
+simplifyRadicalBtn.addEventListener('click', simplifyRadical);
+
+function simplifyRadical() {
+  const index = Math.max(2, parseInt(radicalIndex.value) || 2);
+  const raw = (radicalInput.value || '').trim();
+
+  radicalResult.innerHTML = '';
+
+  // Parse sign and fraction
+  let negative = false;
+  let s = raw;
+  if (s.startsWith('-')) { negative = true; s = s.slice(1); }
+
+  if (!s.length) {
+    radicalResult.innerHTML = `<div class="quad-steps"><p>Please enter a radicand.</p></div>`;
+    return;
+  }
+
+  const parts = s.split('/');
+  let num = parseInt(parts[0], 10);
+  let den = parts[1] ? parseInt(parts[1], 10) : 1;
+
+  const isPureInteger = (parts.length === 1);
+
+  if (!Number.isInteger(num) || !Number.isInteger(den) || den === 0) {
+    radicalResult.innerHTML = `<div class="quad-steps"><p>Please enter integers (optional fraction A/B with B \\(\\neq\\) 0).</p></div>`;
+    return;
+  }
+
+  if (negative && index % 2 === 0) {
+    radicalResult.innerHTML = `
+      <div class="quad-steps">
+        <p><strong>Error:</strong> Even index ${index} of a negative radicand is not real.</p>
+        <p>Try an odd index or remove the negative sign.</p>
+      </div>`;
+    return;
+  }
+
+  if (num === 0) {
+    radicalResult.innerHTML = `<div class="quad-steps"><p>Simplified radical: 0</p></div>`;
+    return;
+  }
+
+  num = Math.abs(num);
+  den = Math.abs(den);
+
+  // 1) Original
+  const signed = negative ? '-' : '';
+  const origLatex = den === 1
+    ? `${signed}${formatRadical(index, `${num}`)}`
+    : `${signed}${formatRadical(index, `\\dfrac{${num}}{${den}}`)}`;
+  let html = `<div class="quad-steps">`;
+  html += `<p><strong>Simplifying:</strong> \\( ${origLatex} \\)</p>`;
+
+  // 2) Prime factorisation (original)
+  const numExpOrig = toExpMap(getPrimeFactors(num));
+  const denExpOrig = den === 1 ? {} : toExpMap(getPrimeFactors(den));
+  html += `<p><strong>Prime factorization:</strong></p>`;
+  if (den === 1) {
+    html += `<p>\\( ${signed}${formatRadical(index, expMapToLatex(numExpOrig))} \\)</p>`;
+  } else {
+    html += `<p>\\( ${signed}${formatRadical(index, '\\dfrac{' + expMapToLatex(numExpOrig) + '}{' + expMapToLatex(denExpOrig) + '}')} \\)</p>`;
+  }
+
+  // 3) Reduce inside fraction if present
+  let [numR, denR, gInside] = reducePair(num, den);
+  if (den !== 1 && gInside > 1) {
+    const gFactors = expMapToLatex(toExpMap(getPrimeFactors(gInside)));
+    html += `<p><strong>Cancel common factors inside:</strong> GCD = ${gInside} = \\( ${gFactors} \\)</p>`;
+    const numExpR = toExpMap(getPrimeFactors(numR));
+    const denExpR = toExpMap(getPrimeFactors(denR));
+    html += `<p>\\( ${signed}${formatRadical(index, '\\dfrac{' + expMapToLatex(numExpR) + '}{' + expMapToLatex(denExpR) + '}')} \\)</p>`;
+
+    // If the denominator is 1 after reduction, drop it and show a normal radical
+  if (denR === 1) {
+    html += `<p>\\( ${signed}${formatRadical(index, expMapToLatex(numExpR))} \\)</p>`;
+  } else {
+    html += `<p>\\( ${signed}${formatRadical(index, '\\dfrac{' + expMapToLatex(numExpR) + '}{' + expMapToLatex(denExpR) + '}')} \\)</p>`;
+  }
+  }
+
+// 4) Extract by groups of index (show grouping work)
+const numExp = toExpMap(getPrimeFactors(numR));
+const denExp = toExpMap(getPrimeFactors(denR));
+
+const { outsideMap: outN, insideMap: inN, stepLines: linesN } =
+  splitByIndex(numExp, index, isPureInteger ? '' : 'numerator');
+const { outsideMap: outD, insideMap: inD, stepLines: linesD } =
+  splitByIndex(denExp, index, 'denominator');
+
+html += `<p><strong>Group exponents by ${index}:</strong></p>`;
+linesN.forEach(line => html += `<p>${line}</p>`);
+if (denR !== 1) linesD.forEach(line => html += `<p>${line}</p>`);
+
+  // Build numeric outside and reduced inside
+  const outsideNum0 = fromExpMapToInt(outN);
+  const outsideDen0 = fromExpMapToInt(outD);
+  let insideNum0 = fromExpMapToInt(inN) || 1;
+  let insideDen0 = fromExpMapToInt(inD) || 1;
+  [insideNum0, insideDen0] = reducePair(insideNum0, insideDen0);
+
+// 5) Apply radical rules — show grouped prime powers, then compact
+
+// Grouped outside factors as prime powers (carry sign)
+const outNumGrouped = expMapToLatex(outN);   // e.g., "2^{1} \cdot 5^{1}" or "1"
+const outDenGrouped = expMapToLatex(outD);   // e.g., "3^{2}" or "1"
+
+let outsideFactorisedLatex = '';
+if (outsideDen0 === 1) {
+  // If there's no denominator outside, just show the grouped numerator with sign
+  if (negative) {
+    outsideFactorisedLatex = (outNumGrouped === '1') ? '-' : `-${outNumGrouped}`;
+  } else {
+    outsideFactorisedLatex = (outNumGrouped === '1') ? '' : outNumGrouped;
+  }
+} else {
+  // Show as a fraction; put the sign on the numerator
+  const numWithSign = negative ? `-${outNumGrouped}` : outNumGrouped;
+  outsideFactorisedLatex = `\\dfrac{${numWithSign}}{${outDenGrouped}}`;
+}
+
+// Grouped inside factors as prime powers (after inside reduction)
+const inNumMap = insideNum0 === 1 ? {} : toExpMap(getPrimeFactors(insideNum0));
+const inDenMap = insideDen0 === 1 ? {} : toExpMap(getPrimeFactors(insideDen0));
+
+const inNumGrouped = expMapToLatex(inNumMap);  // e.g., "2^{2} \cdot 3 \cdot 5 \cdot 29" or "1"
+const inDenGrouped = expMapToLatex(inDenMap);  // e.g., "1" if none
+
+const insideFactorisedCore =
+  (insideDen0 === 1)
+    ? (insideNum0 === 1 ? '1' : inNumGrouped)
+    : `\\dfrac{${inNumGrouped}}{${inDenGrouped}}`;
+
+const insideFactorisedRad =
+  (insideFactorisedCore === '1') ? '' : formatRadical(index, insideFactorisedCore);
+
+// Build the explicit factors line (outside grouped powers · root(inside grouped powers))
+const applyFactorsLine = (() => {
+  const parts = [];
+  // Avoid showing a lone "-" as a factor; if it's just "-", keep it alone unless there's a radical
+  if (outsideFactorisedLatex && outsideFactorisedLatex !== '-') parts.push(outsideFactorisedLatex);
+  if (insideFactorisedRad) parts.push(insideFactorisedRad);
+  return parts.length ? parts.join(' \\cdot ') : (outsideFactorisedLatex || '1');
+})();
+
+html += `<p><strong>Apply radical rules (show factors):</strong></p>`;
+html += `<p>\\( = ${applyFactorsLine} \\)</p>`;
+
+// Now the compact “multiplied” version (what you already had)
+const outsideNum1 = negative ? -outsideNum0 : outsideNum0;
+const outsideFracLatex = (outsideDen0 === 1)
+  ? `${outsideNum1 === 1 ? '' : (outsideNum1 === -1 ? '-' : outsideNum1)}`
+  : `\\dfrac{${outsideNum1}}{${outsideDen0}}`;
+
+const insideLatex1 = (insideDen0 === 1)
+  ? (insideNum0 === 1 ? '' : formatRadical(index, `${insideNum0}`))
+  : formatRadical(index, `\\dfrac{${insideNum0}}{${insideDen0}}`);
+
+let combinedLatex = '';
+if (!insideLatex1) combinedLatex = outsideFracLatex || '1';
+else if (!outsideFracLatex) combinedLatex = insideLatex1;
+else combinedLatex = `${outsideFracLatex}${insideLatex1.startsWith('\\sqrt') ? insideLatex1 : `\\cdot ${insideLatex1}`}`;
+
+html += `<p>\\( = ${combinedLatex} \\)</p>`;
+
+
+  // 6) Rationalise if the denominator still has a radical
+  let finalOutsideNum = outsideNum1;
+  let finalOutsideDen = outsideDen0;
+  let finalInsideNum = insideNum0;
+  let finalInsideDen = insideDen0;
+
+  if (finalInsideDen !== 1) {
+    html += `<p><strong>Rationalize denominator (index ${index}):</strong></p>`;
+    const power = Math.pow(finalInsideDen, index - 1);
+    const ratFactor = formatRadical(index, `${power}`);
+    html += `<p>Multiply top and bottom by \\( ${ratFactor} \\).</p>`;
+
+    finalOutsideDen = finalOutsideDen * finalInsideDen;
+    finalInsideNum = finalInsideNum * power;
+    finalInsideDen = 1;
+
+    // Extract again from the numerator's inside after multiplying
+    const expAfter = toExpMap(getPrimeFactors(finalInsideNum));
+    const { outsideMap: outAfter, insideMap: inAfter } = splitByIndex(expAfter, index, 'numerator (after rationalizing)');
+    const pulled = fromExpMapToInt(outAfter);
+    finalInsideNum = fromExpMapToInt(inAfter) || 1;
+    finalOutsideNum *= pulled;
+
+    const outsideLatex2 = finalOutsideDen === 1
+      ? `${finalOutsideNum === 1 ? '' : finalOutsideNum}`
+      : `\\dfrac{${finalOutsideNum}}{${finalOutsideDen}}`;
+
+    const insideLatex2 = finalInsideNum === 1 ? '' : formatRadical(index, `${finalInsideNum}`);
+    const ratCombined = insideLatex2 ? `${outsideLatex2} \\cdot ${insideLatex2}` : outsideLatex2;
+
+    html += `<p>\\( = ${ratCombined} \\)</p>`;
+    combinedLatex = ratCombined;
+  }
+
+  // 7) Final line
+  html += `<p><strong>Simplified form:</strong> \\( ${combinedLatex} \\)</p>`;
+  html += `</div>`;
+
+  radicalResult.innerHTML = html;
+  if (typeof MathJax !== 'undefined' && MathJax.typeset) MathJax.typeset([radicalResult]);
+}
+
+/* ---------- Tab 6: Vertex Form Converter ---------- */
+const aIn = document.getElementById('coefA');
+const bIn = document.getElementById('coefB');
+const cIn = document.getElementById('coefC');
+const toVertexBtn = document.getElementById('toVertexBtn');
+const vertexResult = document.getElementById('vertexResult');
+
+// Enable button when all three are non-empty
+[aIn, bIn, cIn].forEach(inp => inp.addEventListener('input', () => {
+  toVertexBtn.disabled = !(aIn.value.trim() && bIn.value.trim() && cIn.value.trim());
+  if (toVertexBtn.disabled) vertexResult.innerHTML = '';
+}));
+
+toVertexBtn.addEventListener('click', toVertexForm);
+
+/* ===== exact fraction arithmetic (no floats) ===== */
+function igcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a||1; }
+function norm(n,d){ if(d<0){ n=-n; d=-d; } const g=igcd(n,d); return {n:n/g,d:d/g}; }
+
+function parseFrac(s){
+  // accepts "9/8", "-3", "  5 / -7  ". Refuse decimals; this is a rational house.
+  s = (s||'').trim();
+  if(!s) throw 'Empty';
+  if(s.includes('.')) throw 'Use fractions or integers only.';
+  const neg = s[0]==='-' ? -1 : 1;
+  if(neg===-1) s=s.slice(1);
+  const parts = s.split('/');
+  let n = parseInt(parts[0].trim(),10);
+  if(Number.isNaN(n)) throw 'Bad number';
+  let d = parts[1] ? parseInt(parts[1].trim(),10) : 1;
+  if(Number.isNaN(d) || d===0) throw 'Bad denominator';
+  const f = norm(neg*n,d);
+  return f;
+}
+
+function add(x,y){ return norm(x.n*y.d + y.n*x.d, x.d*y.d); }
+function sub(x,y){ return norm(x.n*y.d - y.n*x.d, x.d*y.d); }
+function mul(x,y){ return norm(x.n*y.n, x.d*y.d); }
+function div(x,y){ if(y.n===0) throw 'Divide by zero'; return norm(x.n*y.d, x.d*y.n); }
+function neg(x){ return {n:-x.n,d:x.d}; }
+function half(x){ return norm(x.n, x.d*2); }
+function sq(x){ return norm(x.n*x.n, x.d*x.d); }
+
+// ------ Clean LaTeX formatting helpers ------
+// - fracLatex: prints -\dfrac{a}{b} (minus OUTSIDE the fraction)
+// - fracAbsLatex: prints \dfrac{|a|}{b} (no sign)
+// - firstTermLatex/signedTermLatex: build ax^2 ± bx ± c without "+ -"
+// - binomPlusMinus: (x ± |t|) with correct sign
+function fracLatex(f, signOutside = true){
+  if (f.d === 1) return `${f.n}`; // integer
+  if (signOutside && f.n < 0) return `-\\dfrac{${Math.abs(f.n)}}{${f.d}}`;
+  return `\\dfrac{${f.n}}{${f.d}}`;
+}
+function fracAbsLatex(f){
+  if (f.d === 1) return `${Math.abs(f.n)}`;
+  return `\\dfrac{${Math.abs(f.n)}}{${f.d}}`;
+}
+function firstTermLatex(f, unit){ // first term: no leading '+'
+  const abs = fracAbsLatex(f);
+  if (f.n < 0) {
+    return abs === '1' ? `-${unit}` : `-${abs}${unit}`;
+  }
+  return abs === '1' ? unit : `${abs}${unit}`;
+}
+function signedTermLatex(f, unit){ // subsequent terms with proper ±
+  const abs = fracAbsLatex(f);
+  const body = (abs === '1' && unit) ? `${unit}` : `${abs}${unit}`;
+  return (f.n < 0) ? ` - ${body}` : ` + ${body}`;
+}
+function binomPlusMinus(t){ // (x ± |t|)
+  const s = (t.n < 0) ? '-' : '+';
+  return `\\left(x ${s} ${fracAbsLatex(t)}\\right)`;
+}
+
+function isZero(f){ return f.n===0; }
+
+/* ===== main: convert ax^2+bx+c to a(x - h)^2 + k ===== */
+/* ===== main: convert ax^2+bx+c to a(x - h)^2 + k ===== */
+function toVertexForm(){
+  try{
+    const A = parseFrac(aIn.value);
+    const B = parseFrac(bIn.value);
+    const C = parseFrac(cIn.value);
+
+    if (isZero(A)) {
+      vertexResult.innerHTML = `<div class="quad-steps"><p><strong>Error:</strong> a = 0 makes it linear, not quadratic.</p></div>`;
+      return;
+    }
+
+    // Helper: check if a = 1 (as a reduced fraction)
+    const aIsOne = (A.n === A.d);
+
+    // Start line (pretty signs)
+    const poly = `\\( ${firstTermLatex(A,'x^{2}')} ${signedTermLatex(B,'x')} ${signedTermLatex(C,'')} \\)`;
+
+    // Work inside the bracket using b/a (no c/a needed now!)
+    const B_over_A = div(B, A);
+    const inside1  = `x^{2}${signedTermLatex(B_over_A,'x')}`;
+
+    // Factor out a from first two terms only
+    const factored = aIsOne
+      ? '' 
+      : `\\( ${fracLatex(A)}\\left(${inside1}\\right)${signedTermLatex(C,'')} \\)`;
+
+    // Complete the square: t = (b/a)/2
+    const t  = half(B_over_A);
+    const t2 = sq(t);
+
+    // Add and subtract t² INSIDE the parentheses, C stays outside
+    const addSub = aIsOne
+      ? `\\( x^{2}${signedTermLatex(B,'x')} + ${fracLatex(t2)} - ${fracLatex(t2)}${signedTermLatex(C,'')} \\)`
+      : `\\( ${fracLatex(A)}\\left(x^{2}${signedTermLatex(B_over_A,'x')} + ${fracLatex(t2)} - ${fracLatex(t2)}\\right)${signedTermLatex(C,'')} \\)`;
+
+    // When we pull -t² out, it gets multiplied by a
+    const pulled_out = mul(A, t2);  // a * t²
+    
+    // Group perfect square and simplify
+    const squareLine = aIsOne
+      ? `\\( ${binomPlusMinus(t)}^{2} - ${fracLatex(t2)}${signedTermLatex(C,'')} \\)`
+      : `\\( ${fracLatex(A)}${binomPlusMinus(t)}^{2} - ${fracLatex(pulled_out)}${signedTermLatex(C,'')} \\)`;
+
+    // Calculate k = C - a*t²
+    const k = sub(C, pulled_out);
+    const h = neg(t);
+
+    // Final vertex form
+    const binom = binomPlusMinus(neg(h));
+    const kTerm = signedTermLatex(k, '');
+
+    const vertexForm = aIsOne
+      ? `\\( ${binom}^{2}${kTerm} \\)`
+      : `\\( ${fracLatex(A)}${binom}^{2}${kTerm} \\)`;
+
+    // Vertex point
+    const vertex = `\\( \\big(${fracLatex(h)},\\; ${fracLatex(k)}\\big) \\)`;
+
+    // Teacher note
+    const comment = `<p><em>Note:</em> we added and subtracted \\( ${fracLatex(t2)} \\)</p>`;
+
+    // Build the work
+    let html = `<div class="quad-steps">`;
+    html += `<p><strong>Start:</strong> ${poly}</p>`;
+    if (!aIsOne) {
+      html += `<p><strong>Factor out \\(a\\) from first two terms:</strong> ${factored}</p>`;
+    }
+    html += `<p><strong>Complete the square:</strong> \\( \\left( ${fracLatex(B_over_A,true)} / 2 \\right)^{2} = ${fracLatex(t2)} \\)</p>`;
+    html += `<p>${addSub}</p>`;
+    html += `${comment}`;
+    html += `<p><strong>Group perfect square:</strong></p>`;
+    html += `<p>${squareLine}</p>`;
+    html += `<p><strong>Vertex form:</strong> ${vertexForm}</p>`;
+    html += `<p><strong>Vertex:</strong> ${vertex}</p>`;
+    html += `</div>`;
+
+    vertexResult.innerHTML = html;
+    if (typeof MathJax !== 'undefined' && MathJax.typeset) MathJax.typeset([vertexResult]);
+
+  }catch(err){
+    vertexResult.innerHTML = `<div class="quad-steps"><p><strong>Error:</strong> ${String(err)}</p><p>Use integers or fractions like 9/8, -5/3, 2.</p></div>`;
+  }
+}
+
+
+
+
+});
+
+
+</script>
+</body>
+</html>
