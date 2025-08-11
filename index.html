@@ -392,12 +392,13 @@ input[type], input, select, textarea {
   border-radius: 12px;
   box-sizing: border-box;
 }
-button, .tool-btn {
+/* replace the generic rule with this */
+.tool-btn {
   width: 100%;
-  padding: 14px 16px;
-  font-size: 1rem;
-  border-radius: 14px;
 }
+
+/* explicitly keep tab buttons auto-sized */
+.tabs button { width: auto; }
 
 /* 4) Tabs: scrollable, sticky, not microscopic */
 .tool-tabs, .tabs, nav.tabs {
@@ -442,6 +443,41 @@ button, .tool-btn {
 .section { margin: 20px 0; }
 h1, h2 { line-height: 1.2; margin: 8px 0 14px; }
 
+
+/* Desktop/tablet keeps the original wide table */
+@media (min-width: 768px){
+  .factor-table-desktop{display:block}
+  .factor-table-mobile{display:none}
+}
+
+/* Mobile shows a clean stacked (transposed) table */
+@media (max-width: 767px){
+  .factor-table-desktop{display:none}
+  .factor-table-mobile{display:block}
+  .factor-table-mobile table{
+    width:100%;
+    border-collapse:collapse;
+    margin:12px 0 8px;
+  }
+  .factor-table-mobile th,
+  .factor-table-mobile td{
+    border:1px solid #ddd;
+    padding:8px;
+    text-align:center;
+    font-size:1rem;
+  }
+  .factor-table-mobile th{
+    background:#f7f7f8;
+    font-weight:700;
+  }
+}
+
+/* put these with that block, same area */
+@media (max-width: 767px){
+  .factor-table-mobile table{ position: relative; } /* helps sticky anchor */
+  /* if your app isn’t pure white, match the background */
+  .factor-table-mobile td:first-child{ background: var(--paper, #fff); }
+}
 
 </style>
 </head>
@@ -730,7 +766,6 @@ function renderColumns(n, {expMap, exps, tau, pairs, divisors, isSquare}){
     <p>${divisors.join(', ')}</p>
     <p><em>Total:</em> ${tau}</p>
   `;
-
 }
 
 
@@ -770,93 +805,166 @@ updateLcmBtn();
 updateGcfBtn();
 
 
- /* ---------- Tab 2: LCM Finder (Improved Colors) ---------- */
-function computeAndShowLCM() {
-  const vals = lcmInputs.map(i => +i.value).filter(v => v > 0);
-  if (vals.length < 2) return;
-  
-  lcmRes.innerHTML = '';
-  const container = document.createElement('div');
-  container.className = 'quad-steps';
-  
-  // Calculate LCM
-  let L = vals[0];
-  for (let i = 1; i < vals.length; i++) {
-    L = (L * vals[i]) / gcd(L, vals[i]);
-  }
-  
-  // Get prime factorizations
-  const maps = vals.map(v => getPrimeFactors(v).reduce((o,p) => (o[p] = (o[p] || 0) + 1, o), {}));
-  const primes = [...new Set(maps.flatMap(m => Object.keys(m)))].map(Number).sort((a,b) => a - b);
-  
-  // Create the factor table
+function renderFactorTable(mode, primes, maps, values){
+  // mode: 'lcm' or 'gcf'
+  const accent = mode === 'lcm' ? 'var(--accent1)' : 'var(--accent3)';
+  const allHave = p => maps.every(m => (m[p] || 0) > 0);
+  const maxExp  = p => Math.max(...maps.map(m => m[p] || 0));
+  const minExp  = p => Math.min(...maps.map(m => m[p] || 0));
+
+  const fragment    = document.createDocumentFragment();
+  const desktopWrap = document.createElement('div'); desktopWrap.className = 'factor-table-desktop';
+  const mobileWrap  = document.createElement('div');  mobileWrap.className  = 'factor-table-mobile';
+
+  // ===== DESKTOP/TABLET (your existing look) =====
   const tbl = document.createElement('table');
   tbl.className = 'work-table';
-  
-  vals.forEach((val, idx) => {
+
+  // input rows
+  values.forEach((val, rowIdx) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td><strong>${val}</strong> =</td>`;
     primes.forEach((p, i) => {
-      const e = maps[idx][p] || 0;
+      const e  = maps[rowIdx][p] || 0;
       const td = document.createElement('td');
-      td.innerHTML = e ? `${p}${e > 1 ? `<sup>${e}</sup>` : ''}` : '';
-      
-      // Keep original number black
+      td.innerHTML = e ? `${p}${e>1?`<sup>${e}</sup>`:''}` : '';
       td.style.color = 'var(--text)';
-      
-      // Highlight only the exponents we're taking for LCM
-      if (e > 0 && e === Math.max(...maps.map(m => m[p] || 0))) {
-        td.style.color = 'var(--accent1)';
-        td.style.fontWeight = 'bold';
+      if (mode === 'lcm') {
+        if (e>0 && e===maxExp(p)) { td.style.color = accent; td.style.fontWeight = '600'; }
+      } else {
+        if (allHave(p) && e===minExp(p)) { td.style.color = accent; td.style.fontWeight = '600'; }
       }
       tr.appendChild(td);
       if (i < primes.length - 1) {
-        const d = document.createElement('td');
-        d.className = 'dot-cell';
-        d.textContent = '·';
-        d.style.color = 'var(--text)'; // Keep separator black
-        tr.appendChild(d);
+        const dot = document.createElement('td');
+        dot.className = 'dot-cell';
+        dot.textContent = '·';
+        dot.style.color = 'var(--text)';
+        tr.appendChild(dot);
       }
     });
     tbl.appendChild(tr);
   });
-  
-  container.appendChild(tbl);
-  
-  // Add LCM result row
-  const lcmRow = document.createElement('tr');
-  lcmRow.innerHTML = '<td><strong>LCM =</strong></td>';
-  primes.forEach((p, i) => {
-    const maxExp = Math.max(...maps.map(m => m[p] || 0));
-    if (maxExp > 0) {
-      const td = document.createElement('td');
-      td.innerHTML = maxExp > 1 ? `${p}<sup>${maxExp}</sup>` : p;
-      td.style.color = 'var(--accent1)';
-      td.style.fontWeight = 'bold';
-      lcmRow.appendChild(td);
-      
-      if (i < primes.length - 1) {
-        const d = document.createElement('td');
-        d.className = 'dot-cell';
-        d.textContent = '·';
-        d.style.color = 'var(--text)'; // Keep separator black
-        lcmRow.appendChild(d);
-      }
+
+  // result row
+  const resRow = document.createElement('tr');
+  resRow.innerHTML = `<td><strong>${mode.toUpperCase()} =</strong></td>`;
+  const addPrime = (p,e)=>{
+    const td=document.createElement('td');
+    td.innerHTML = e>1?`${p}<sup>${e}</sup>`:`${p}`;
+    td.style.color=accent; td.style.fontWeight='700';
+    return td;
+  };
+
+  if (mode === 'lcm') {
+  const used = primes.filter(p => maxExp(p) > 0);
+  used.forEach((p, i) => {
+    const e = maxExp(p);
+    resRow.appendChild(addPrime(p, e));
+    if (i < used.length - 1) {
+      const d = document.createElement('td');
+      d.className = 'dot-cell';
+      d.textContent = '·';
+      d.style.color = 'var(--text)';
+      resRow.appendChild(d);
     }
   });
-  tbl.appendChild(lcmRow);
-  
-  // Add explanation
+} else {
+    const commons = primes.filter(allHave);
+    if (!commons.length){
+      const td=document.createElement('td'); td.textContent='1'; td.style.color=accent; td.style.fontWeight='700';
+      resRow.appendChild(td);
+    } else {
+      commons.forEach((p,i)=>{
+        resRow.appendChild(addPrime(p,minExp(p)));
+        if (i<commons.length-1){
+          const d=document.createElement('td'); d.className='dot-cell'; d.textContent='·'; d.style.color='var(--text)';
+          resRow.appendChild(d);
+        }
+      });
+    }
+  }
+  tbl.appendChild(resRow);
+  desktopWrap.appendChild(tbl);
+
+  // ===== MOBILE (transposed) =====
+  const tblm = document.createElement('table');
+
+  // header row
+  const hdr = document.createElement('tr');
+  const thP = document.createElement('th'); thP.textContent='Prime'; hdr.appendChild(thP);
+  values.forEach(v=>{
+    const th=document.createElement('th'); th.textContent=v; hdr.appendChild(th);
+  });
+  tblm.appendChild(hdr);
+
+  // prime rows
+  primes.forEach(p=>{
+    const tr=document.createElement('tr');
+    const tdp=document.createElement('td'); tdp.textContent=p; tr.appendChild(tdp);
+
+    const eMax=maxExp(p), eMin=minExp(p), showG=allHave(p)&&eMin>0;
+    values.forEach((_,idx)=>{
+      const e=maps[idx][p]||0;
+      const td=document.createElement('td');
+      td.textContent = e ? (e>1?`${p}^${e}`:`${p}`) : '';
+      if (mode==='lcm' && e>0 && e===eMax){ td.style.color=accent; td.style.fontWeight='600'; }
+      if (mode==='gcf' && showG && e===eMin){ td.style.color=accent; td.style.fontWeight='600'; }
+      tr.appendChild(td);
+    });
+    tblm.appendChild(tr);
+  });
+
+  // mobile result row
+  const r=document.createElement('tr');
+  const rl=document.createElement('td'); rl.textContent=mode.toUpperCase(); r.appendChild(rl);
+  const rv=document.createElement('td'); rv.colSpan=values.length; rv.style.color=accent; rv.style.fontWeight='700';
+  if (mode==='lcm'){
+    const parts = primes.map(p=>{const e=maxExp(p); return e>0?(e>1?`${p}^${e}`:`${p}`):null}).filter(Boolean);
+    rv.textContent = parts.length?parts.join(' · '):'1';
+  } else {
+    const parts = primes.filter(allHave).map(p=>{const e=minExp(p); return e>1?`${p}^${e}`:`${p}`;});
+    rv.textContent = parts.length?parts.join(' · '):'1';
+  }
+  r.appendChild(rv); tblm.appendChild(r);
+  mobileWrap.appendChild(tblm);
+
+  fragment.appendChild(desktopWrap);
+  fragment.appendChild(mobileWrap);
+  return fragment;
+}
+
+ /* ---------- Tab 2: LCM Finder (Improved Colors) ---------- */
+function computeAndShowLCM() {
+  const vals = lcmInputs.map(i => +i.value).filter(v => v > 0);
+  if (vals.length < 2) return;
+
+  lcmRes.innerHTML = '';
+  const container = document.createElement('div');
+  container.className = 'quad-steps';
+
+  // Calculate numeric LCM
+  let L = vals[0];
+  for (let i = 1; i < vals.length; i++) L = (L * vals[i]) / gcd(L, vals[i]);
+
+  // Prime maps and union of primes
+  const maps   = vals.map(v => getPrimeFactors(v).reduce((o,p)=>(o[p]=(o[p]||0)+1,o),{}));
+  const primes = [...new Set(maps.flatMap(m => Object.keys(m)))].map(Number).sort((a,b)=>a-b);
+
+  // New dual-render table (desktop + mobile)
+  container.appendChild(renderFactorTable('lcm', primes, maps, vals));
+
+  // Explanation + final line
   const explanation = document.createElement('p');
   explanation.style.marginTop = '20px';
-  explanation.innerHTML = `<strong>Explanation:</strong> For each prime factor, we take the <span style="color: var(--accent1); font-weight: bold">highest power</span> that appears in any number.`;
-  
-  // Add final result
+  explanation.innerHTML =
+    `<strong>Explanation:</strong> For each prime factor, we take the <span style="color:var(--accent1);font-weight:bold">highest power</span> that appears in any number.`;
+
   const result = document.createElement('p');
   result.id = 'lcmPara';
   result.style.marginTop = '15px';
   result.innerHTML = `LCM of <strong>${vals.join(', ')}</strong> is <strong>${L}</strong>.`;
-  
+
   container.appendChild(explanation);
   container.appendChild(result);
   lcmRes.appendChild(container);
@@ -866,90 +974,33 @@ function computeAndShowLCM() {
 function computeAndShowGCF() {
   const v = gcfInputs.map(i => +i.value).filter(n => n > 0);
   if (v.length < 2) return;
-  
+
   gcfRes.innerHTML = '';
   const container = document.createElement('div');
   container.className = 'quad-steps';
-  
-  // Calculate GCF
+
+  // Numeric GCF
   let G = v[0];
-  for (let i = 1; i < v.length; i++) {
-    G = gcd(G, v[i]);
-  }
-  
-  // Get prime factorizations
-  const maps = v.map(n => getPrimeFactors(n).reduce((o,p) => (o[p] = (o[p] || 0) + 1, o), {}));
-  const primes = [...new Set(maps.flatMap(m => Object.keys(m)))].map(Number).sort((a,b) => a - b);
-  const commonPrimes = primes.filter(p => maps.every(m => m[p] > 0));
-  
-  // Create the factor table
-  const tbl = document.createElement('table');
-  tbl.className = 'work-table';
-  
-  v.forEach((val, idx) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td><strong>${val}</strong> =</td>`;
-    primes.forEach((p, i) => {
-      const e = maps[idx][p] || 0;
-      const td = document.createElement('td');
-      td.innerHTML = e ? `${p}${e > 1 ? `<sup>${e}</sup>` : ''}` : '';
-      
-      // Keep original number black
-      td.style.color = 'var(--text)';
-      
-      // Highlight only the exponents we're taking for GCF
-      if (commonPrimes.includes(p) && e === Math.min(...maps.map(m => m[p] || 0))) {
-        td.style.color = 'var(--accent3)';
-        td.style.fontWeight = 'bold';
-      }
-      tr.appendChild(td);
-      if (i < primes.length - 1) {
-        const d = document.createElement('td');
-        d.className = 'dot-cell';
-        d.textContent = '·';
-        d.style.color = 'var(--text)'; // Keep separator black
-        tr.appendChild(d);
-      }
-    });
-    tbl.appendChild(tr);
-  });
-  
-  container.appendChild(tbl);
-  
-  // Add GCF result row (only if common primes exist)
-  if (commonPrimes.length > 0) {
-    const gcfRow = document.createElement('tr');
-    gcfRow.innerHTML = '<td><strong>GCF =</strong></td>';
-    commonPrimes.forEach((p, i) => {
-      const minExp = Math.min(...maps.map(m => m[p] || 0));
-      const td = document.createElement('td');
-      td.innerHTML = minExp > 1 ? `${p}<sup>${minExp}</sup>` : p;
-      td.style.color = 'var(--accent3)';
-      td.style.fontWeight = 'bold';
-      gcfRow.appendChild(td);
-      
-      if (i < commonPrimes.length - 1) {
-        const d = document.createElement('td');
-        d.className = 'dot-cell';
-        d.textContent = '·';
-        d.style.color = 'var(--text)'; // Keep separator black
-        gcfRow.appendChild(d);
-      }
-    });
-    tbl.appendChild(gcfRow);
-  }
-  
-  // Add explanation
+  for (let i = 1; i < v.length; i++) G = gcd(G, v[i]);
+
+  // Prime maps and union of primes
+  const maps   = v.map(n => getPrimeFactors(n).reduce((o,p)=>(o[p]=(o[p]||0)+1,o),{}));
+  const primes = [...new Set(maps.flatMap(m => Object.keys(m)))].map(Number).sort((a,b)=>a-b);
+
+  // New dual-render table (desktop + mobile)
+  container.appendChild(renderFactorTable('gcf', primes, maps, v));
+
+  // Explanation + final line
   const explanation = document.createElement('p');
   explanation.style.marginTop = '20px';
-  explanation.innerHTML = `<strong>Explanation:</strong> For each <span style="color: var(--accent3); font-weight: bold">common prime factor</span>, we take the <span style="color: var(--accent3); font-weight: bold">lowest power</span> that appears in all numbers.`;
-  
-  // Add final result
+  explanation.innerHTML =
+    `<strong>Explanation:</strong> For each <em>common</em> prime factor, we take the <span style="color:var(--accent3);font-weight:bold">lowest power</span> that appears in all numbers.`;
+
   const result = document.createElement('p');
   result.id = 'gcfPara';
   result.style.marginTop = '15px';
   result.innerHTML = `GCF of <strong>${v.join(', ')}</strong> is <strong>${G}</strong>.`;
-  
+
   container.appendChild(explanation);
   container.appendChild(result);
   gcfRes.appendChild(container);
