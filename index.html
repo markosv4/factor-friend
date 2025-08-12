@@ -450,34 +450,49 @@ h1, h2 { line-height: 1.2; margin: 8px 0 14px; }
   .factor-table-mobile{display:none}
 }
 
-/* Mobile shows a clean stacked (transposed) table */
+/* Mobile: transpose the desktop look; invisible grid; dot ROWS; right LCM/GCF column */
 @media (max-width: 767px){
-  .factor-table-desktop{display:none}
-  .factor-table-mobile{display:block}
+  .factor-table-desktop{ display:none }
+  .factor-table-mobile{ display:block }
+
   .factor-table-mobile table{
     width:100%;
-    border-collapse:collapse;
-    margin:12px 0 8px;
+    border-collapse:separate;
+    border-spacing:0;                 /* no visible grid */
+    background:transparent;
   }
   .factor-table-mobile th,
   .factor-table-mobile td{
-    border:1px solid #ddd;
-    padding:8px;
+    border:0;
+    padding:6px 8px;
     text-align:center;
     font-size:1rem;
+    white-space:nowrap;
   }
-  .factor-table-mobile th{
-    background:#f7f7f8;
+  .factor-table-mobile thead th{
+    font-weight:700;
+  }
+
+  /* dot rows between prime rows (vertical multiplication) */
+  .factor-table-mobile .dot-row td{
+    padding:2px 8px;
+    line-height:1;
+    opacity:.7;
+  }
+
+  /* sticky header helps when list is tall */
+  .factor-table-mobile thead th{
+    position:sticky; top:0;
+    background: var(--paper, #fff);
+    z-index:1;
+  }
+
+  /* right-most LCM/GCF column gets a tad more space */
+  .factor-table-mobile .res-col{
     font-weight:700;
   }
 }
 
-/* put these with that block, same area */
-@media (max-width: 767px){
-  .factor-table-mobile table{ position: relative; } /* helps sticky anchor */
-  /* if your app isn’t pure white, match the background */
-  .factor-table-mobile td:first-child{ background: var(--paper, #fff); }
-}
 
 </style>
 </head>
@@ -813,9 +828,7 @@ function renderFactorTable(mode, primes, maps, values) {
 
   const fragment = document.createDocumentFragment();
 
-  /* ----------------------------------------------------------
-     1. DESKTOP (unchanged)
-  ---------------------------------------------------------- */
+  // ===== DESKTOP (unchanged) =====
   const desktopWrap = document.createElement('div');
   desktopWrap.className = 'factor-table-desktop';
   const tbl = document.createElement('table');
@@ -829,7 +842,7 @@ function renderFactorTable(mode, primes, maps, values) {
       const td = document.createElement('td');
       td.innerHTML = e ? `${p}${e>1?`<sup>${e}</sup>`:''}` : '';
       td.style.color = mode === 'lcm'
-        ? (e === maxExp(p) ? accent : 'var(--text)')
+        ? (e > 0 && e === maxExp(p) ? accent : 'var(--text)')
         : (allHave(p) && e === minExp(p) ? accent : 'var(--text)');
       tr.appendChild(td);
       if (i < primes.length - 1) {
@@ -843,9 +856,7 @@ function renderFactorTable(mode, primes, maps, values) {
 
   const resRow = document.createElement('tr');
   resRow.innerHTML = `<td><strong>${mode.toUpperCase()} =</strong></td>`;
-  const chosen = mode === 'lcm'
-    ? primes.filter(p => maxExp(p) > 0)
-    : primes.filter(allHave);
+  const chosen = mode === 'lcm' ? primes.filter(p => maxExp(p) > 0) : primes.filter(allHave);
   chosen.forEach((p, i) => {
     const e = mode === 'lcm' ? maxExp(p) : minExp(p);
     const td = document.createElement('td');
@@ -865,91 +876,61 @@ function renderFactorTable(mode, primes, maps, values) {
   desktopWrap.appendChild(tbl);
   fragment.appendChild(desktopWrap);
 
-  /* ----------------------------------------------------------
-     2. MOBILE – transposed, invisible table
-  ---------------------------------------------------------- */
+  // ===== MOBILE (transposed to match desktop spirit) =====
   const mobileWrap = document.createElement('div');
   mobileWrap.className = 'factor-table-mobile';
-
   const mTbl = document.createElement('table');
-  mTbl.style.borderCollapse = 'collapse';
-  mTbl.style.width = '100%';
-  mTbl.style.background = 'transparent';
-  mTbl.style.border = 'none';
-  mTbl.style.marginTop = '8px';
 
-  // header row (values)
-  const hRow = document.createElement('tr');
-  const thP = document.createElement('td');
-  thP.style.padding = '4px 6px';
-  thP.style.fontWeight = '600';
-  thP.textContent = '';
-  hRow.appendChild(thP);
-  values.forEach(v => {
-    const th = document.createElement('td');
-    th.textContent = v;
-    th.style.padding = '4px 6px';
-    th.style.fontWeight = '600';
-    hRow.appendChild(th);
-  });
-  mTbl.appendChild(hRow);
+  // header: blank corner, then each value with dot columns between
+  {
+    const hdr = document.createElement('tr');
+    const corner = document.createElement('th'); corner.textContent = ''; hdr.appendChild(corner);
+    values.forEach((v, i) => {
+      const th = document.createElement('th'); th.textContent = v; hdr.appendChild(th);
+      if (i < values.length - 1) { const dot = document.createElement('th'); dot.textContent = '·'; hdr.appendChild(dot); }
+    });
+    mTbl.appendChild(hdr);
+  }
 
-  // prime rows
+  // rows: left cell is prime; then each number’s p^e with dot cells between
   primes.forEach(p => {
     const tr = document.createElement('tr');
-    const pTd = document.createElement('td');
-    pTd.textContent = p;
-    pTd.style.padding = '4px 6px';
-    pTd.style.fontWeight = '600';
-    tr.appendChild(pTd);
+    const primeCell = document.createElement('td'); primeCell.textContent = p; tr.appendChild(primeCell);
+    const eMax = maxExp(p), eMin = minExp(p), showG = allHave(p) && eMin > 0;
 
     values.forEach((_, idx) => {
       const e = maps[idx][p] || 0;
       const td = document.createElement('td');
-      if (e > 0) {
-        td.innerHTML = e > 1 ? `${e}` : '1';
-        td.style.color = mode === 'lcm'
-          ? (e === maxExp(p) ? accent : 'var(--text)')
-          : (allHave(p) && e === minExp(p) ? accent : 'var(--text)');
-      }
-      td.style.padding = '4px 6px';
+      td.innerHTML = e ? (e > 1 ? `${p}<sup>${e}</sup>` : `${p}`) : '';
+      if (mode === 'lcm' && e > 0 && e === eMax) { td.style.color = accent; td.style.fontWeight = '600'; }
+      if (mode === 'gcf' && showG && e === eMin) { td.style.color = accent; td.style.fontWeight = '600'; }
       tr.appendChild(td);
+      // dot cell between numbers
+      if (idx < values.length - 1) { const d = document.createElement('td'); d.textContent = '·'; tr.appendChild(d); }
     });
     mTbl.appendChild(tr);
   });
 
   // result row
-  const rRow = document.createElement('tr');
-  const rLab = document.createElement('td');
-  rLab.textContent = mode.toUpperCase();
-  rLab.style.padding = '4px 6px';
-  rLab.style.fontWeight = '700';
-  rRow.appendChild(rLab);
-
-  chosen.forEach((_, idx) => {
-    const td = document.createElement('td');
-    const e = mode === 'lcm' ? maxExp(chosen[idx]) : minExp(chosen[idx]);
-    td.textContent = e > 1 ? `${chosen[idx]}^${e}` : `${chosen[idx]}`;
-    td.style.color = accent;
-    td.style.fontWeight = '700';
-    td.style.padding = '4px 6px';
-    rRow.appendChild(td);
-  });
-  if (chosen.length === 0) {
-    const td = document.createElement('td');
-    td.textContent = '1';
-    td.style.color = accent;
-    td.style.fontWeight = '700';
-    td.style.padding = '4px 6px';
-    rRow.appendChild(td);
+  {
+    const tr = document.createElement('tr');
+    const label = document.createElement('td'); label.textContent = mode.toUpperCase(); tr.appendChild(label);
+    const td = document.createElement('td'); td.colSpan = values.length; td.style.color = accent; td.style.fontWeight = '700';
+    if (mode === 'lcm') {
+      const parts = primes.map(p => { const e = maxExp(p); return e > 0 ? (e > 1 ? `${p}<sup>${e}</sup>` : `${p}`) : null; }).filter(Boolean);
+      td.innerHTML = parts.length ? parts.join(' · ') : '1';
+    } else {
+      const parts = primes.filter(allHave).map(p => { const e = minExp(p); return e > 1 ? `${p}<sup>${e}</sup>` : `${p}`; });
+      td.innerHTML = parts.length ? parts.join(' · ') : '1';
+    }
+    tr.appendChild(td); mTbl.appendChild(tr);
   }
-  mTbl.appendChild(rRow);
 
   mobileWrap.appendChild(mTbl);
   fragment.appendChild(mobileWrap);
-
   return fragment;
 }
+
 
  /* ---------- Tab 2: LCM Finder (Improved Colors) ---------- */
 function computeAndShowLCM() {
