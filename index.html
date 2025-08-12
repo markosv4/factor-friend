@@ -805,22 +805,26 @@ updateLcmBtn();
 updateGcfBtn();
 
 
-function renderFactorTable(mode, primes, maps, values){
-  // mode: 'lcm' or 'gcf'
+/* ---------- renderFactorTable  (desktop untouched + mobile strip) ---------- */
+function renderFactorTable(mode, primes, maps, values) {
   const accent = mode === 'lcm' ? 'var(--accent1)' : 'var(--accent3)';
   const allHave = p => maps.every(m => (m[p] || 0) > 0);
   const maxExp  = p => Math.max(...maps.map(m => m[p] || 0));
   const minExp  = p => Math.min(...maps.map(m => m[p] || 0));
 
-  const fragment    = document.createDocumentFragment();
-  const desktopWrap = document.createElement('div'); desktopWrap.className = 'factor-table-desktop';
-  const mobileWrap  = document.createElement('div');  mobileWrap.className  = 'factor-table-mobile';
+  /* ----------------------------------------------------------
+     1.  ORIGINAL DESKTOP / TABLET TABLE (unchanged)
+  ---------------------------------------------------------- */
+  const fragment = document.createDocumentFragment();
 
-  // ===== DESKTOP/TABLET (your existing look) =====
+  /* desktop wrapper */
+  const desktopWrap = document.createElement('div');
+  desktopWrap.className = 'factor-table-desktop';
+
   const tbl = document.createElement('table');
   tbl.className = 'work-table';
 
-  // input rows
+  /* input rows */
   values.forEach((val, rowIdx) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td><strong>${val}</strong> =</td>`;
@@ -846,7 +850,7 @@ function renderFactorTable(mode, primes, maps, values){
     tbl.appendChild(tr);
   });
 
-  // result row
+  /* result row */
   const resRow = document.createElement('tr');
   resRow.innerHTML = `<td><strong>${mode.toUpperCase()} =</strong></td>`;
   const addPrime = (p,e)=>{
@@ -855,21 +859,20 @@ function renderFactorTable(mode, primes, maps, values){
     td.style.color=accent; td.style.fontWeight='700';
     return td;
   };
-
   if (mode === 'lcm') {
-  const used = primes.filter(p => maxExp(p) > 0);
-  used.forEach((p, i) => {
-    const e = maxExp(p);
-    resRow.appendChild(addPrime(p, e));
-    if (i < used.length - 1) {
-      const d = document.createElement('td');
-      d.className = 'dot-cell';
-      d.textContent = '·';
-      d.style.color = 'var(--text)';
-      resRow.appendChild(d);
-    }
-  });
-} else {
+    const used = primes.filter(p => maxExp(p) > 0);
+    used.forEach((p, i) => {
+      const e = maxExp(p);
+      resRow.appendChild(addPrime(p, e));
+      if (i < used.length - 1) {
+        const d = document.createElement('td');
+        d.className = 'dot-cell';
+        d.textContent = '·';
+        d.style.color = 'var(--text)';
+        resRow.appendChild(d);
+      }
+    });
+  } else {
     const commons = primes.filter(allHave);
     if (!commons.length){
       const td=document.createElement('td'); td.textContent='1'; td.style.color=accent; td.style.fontWeight='700';
@@ -886,51 +889,84 @@ function renderFactorTable(mode, primes, maps, values){
   }
   tbl.appendChild(resRow);
   desktopWrap.appendChild(tbl);
-
-  // ===== MOBILE (transposed) =====
-  const tblm = document.createElement('table');
-
-  // header row
-  const hdr = document.createElement('tr');
-  const thP = document.createElement('th'); thP.textContent='Prime'; hdr.appendChild(thP);
-  values.forEach(v=>{
-    const th=document.createElement('th'); th.textContent=v; hdr.appendChild(th);
-  });
-  tblm.appendChild(hdr);
-
-  // prime rows
-  primes.forEach(p=>{
-    const tr=document.createElement('tr');
-    const tdp=document.createElement('td'); tdp.textContent=p; tr.appendChild(tdp);
-
-    const eMax=maxExp(p), eMin=minExp(p), showG=allHave(p)&&eMin>0;
-    values.forEach((_,idx)=>{
-      const e=maps[idx][p]||0;
-      const td=document.createElement('td');
-      td.textContent = e ? (e>1?`${p}^${e}`:`${p}`) : '';
-      if (mode==='lcm' && e>0 && e===eMax){ td.style.color=accent; td.style.fontWeight='600'; }
-      if (mode==='gcf' && showG && e===eMin){ td.style.color=accent; td.style.fontWeight='600'; }
-      tr.appendChild(td);
-    });
-    tblm.appendChild(tr);
-  });
-
-  // mobile result row
-  const r=document.createElement('tr');
-  const rl=document.createElement('td'); rl.textContent=mode.toUpperCase(); r.appendChild(rl);
-  const rv=document.createElement('td'); rv.colSpan=values.length; rv.style.color=accent; rv.style.fontWeight='700';
-  if (mode==='lcm'){
-    const parts = primes.map(p=>{const e=maxExp(p); return e>0?(e>1?`${p}^${e}`:`${p}`):null}).filter(Boolean);
-    rv.textContent = parts.length?parts.join(' · '):'1';
-  } else {
-    const parts = primes.filter(allHave).map(p=>{const e=minExp(p); return e>1?`${p}^${e}`:`${p}`;});
-    rv.textContent = parts.length?parts.join(' · '):'1';
-  }
-  r.appendChild(rv); tblm.appendChild(r);
-  mobileWrap.appendChild(tblm);
-
   fragment.appendChild(desktopWrap);
+
+  /* ----------------------------------------------------------
+     2.  NEW MOBILE-ONLY STRIP (invisible table, dots, exponents)
+  ---------------------------------------------------------- */
+  const mobileWrap = document.createElement('div');
+  mobileWrap.className = 'factor-table-mobile';
+
+  const mTbl = document.createElement('table');
+  mTbl.style.borderCollapse = 'collapse';
+  mTbl.style.width = '100%';
+  mTbl.style.background = 'transparent';
+  mTbl.style.border = 'none';
+  mTbl.style.marginTop = '8px';
+
+  /* helper */
+  const fmt = (p, e) => e > 1 ? `${p}<sup>${e}</sup>` : `${p}`;
+  const dot = () => {
+    const td = document.createElement('td');
+    td.textContent = '·';
+    td.style.padding = '0 4px';
+    td.style.color = 'var(--text)';
+    return td;
+  };
+
+  /* input rows */
+  values.forEach((val, rowIdx) => {
+    const tr = document.createElement('tr');
+    const label = document.createElement('td');
+    label.textContent = val + ' =';
+    label.style.paddingRight = '8px';
+    label.style.fontWeight = '600';
+    tr.appendChild(label);
+    primes.forEach((p, idx) => {
+      const e = maps[rowIdx][p] || 0;
+      if (e === 0) return;
+      const td = document.createElement('td');
+      td.innerHTML = fmt(p, e);
+      td.style.color = mode === 'lcm'
+        ? (e === maxExp(p) ? accent : 'var(--text)')
+        : (allHave(p) && e === minExp(p) ? accent : 'var(--text)');
+      tr.appendChild(td);
+      if (idx < primes.length - 1) tr.appendChild(dot());
+    });
+    mTbl.appendChild(tr);
+  });
+
+  /* result row */
+  const mRes = document.createElement('tr');
+  const mLab = document.createElement('td');
+  mLab.textContent = mode.toUpperCase() + ' =';
+  mLab.style.paddingRight = '8px';
+  mLab.style.fontWeight = '700';
+  mRes.appendChild(mLab);
+
+  const chosen = mode === 'lcm'
+    ? primes.filter(p => maxExp(p) > 0)
+    : primes.filter(allHave);
+  chosen.forEach((p, idx) => {
+    const e = mode === 'lcm' ? maxExp(p) : minExp(p);
+    const td = document.createElement('td');
+    td.innerHTML = fmt(p, e);
+    td.style.color = accent;
+    td.style.fontWeight = '700';
+    mRes.appendChild(td);
+    if (idx < chosen.length - 1) mRes.appendChild(dot());
+  });
+  if (chosen.length === 0) {
+    const td = document.createElement('td');
+    td.textContent = '1';
+    td.style.color = accent;
+    td.style.fontWeight = '700';
+    mRes.appendChild(td);
+  }
+  mTbl.appendChild(mRes);
+  mobileWrap.appendChild(mTbl);
   fragment.appendChild(mobileWrap);
+
   return fragment;
 }
 
@@ -1146,11 +1182,25 @@ function tryACMethod(workDiv, a, b, c, g, a1, b1, c1) {
   if (factors) {
     const [f1, f2] = factors;
     
-    workDiv.innerHTML += `
-      <p><strong>Case:</strong> Complex Trinomial</p>
-      <p>Find factors of \\(a \\cdot c = ${a1} \\cdot ${c1} = ${product}\\) that sum to \\(b = ${b1}\\)</p>
-      <p>Factors found: ${f1}, ${f2}</p>
-      <p>Decompose middle term: \\(${b1}x = ${f1}x + ${f2}x\\)</p>`;
+    // Format the decomposition properly
+let decompStr = `${b1}x = `;
+if (f1 === 1) decompStr += 'x';
+else if (f1 === -1) decompStr += '-x';
+else decompStr += `${f1}x`;
+
+if (f2 >= 0) {
+  if (f2 === 1) decompStr += ' + x';
+  else decompStr += ` + ${f2}x`;
+} else {
+  if (f2 === -1) decompStr += ' - x';
+  else decompStr += ` - ${Math.abs(f2)}x`;
+}
+
+workDiv.innerHTML += `
+  <p><strong>Case:</strong> Complex Trinomial</p>
+  <p>Find factors of \\(a \\cdot c = ${a1} \\cdot ${c1} = ${product}\\) that sum to \\(b = ${b1}\\)</p>
+  <p>Factors found: ${f1}, ${f2}</p>
+  <p>Decompose middle term: \\(${decompStr}\\)</p>`;
     
     // Show the rewritten expression
     let rewrittenExpr = `${a1}x^2`;
@@ -1908,21 +1958,38 @@ const applyFactorsLine = (() => {
 html += `<p><strong>Apply radical rules (show factors):</strong></p>`;
 html += `<p>\\( = ${applyFactorsLine} \\)</p>`;
 
-// Now the compact “multiplied” version (what you already had)
+// Now the compact "multiplied" version
 const outsideNum1 = negative ? -outsideNum0 : outsideNum0;
-const outsideFracLatex = (outsideDen0 === 1)
-  ? `${outsideNum1 === 1 ? '' : (outsideNum1 === -1 ? '-' : outsideNum1)}`
-  : `\\dfrac{${outsideNum1}}{${outsideDen0}}`;
 
-const insideLatex1 = (insideDen0 === 1)
-  ? (insideNum0 === 1 ? '' : formatRadical(index, `${insideNum0}`))
-  : formatRadical(index, `\\dfrac{${insideNum0}}{${insideDen0}}`);
-
+// Build the final expression more cleanly
 let combinedLatex = '';
-if (!insideLatex1) combinedLatex = outsideFracLatex || '1';
-else if (!outsideFracLatex) combinedLatex = insideLatex1;
-else combinedLatex = `${outsideFracLatex}${insideLatex1.startsWith('\\sqrt') ? insideLatex1 : `\\cdot ${insideLatex1}`}`;
-
+if (insideNum0 === 1 && insideDen0 === 1) {
+  // No radical part
+  if (outsideDen0 === 1) {
+    combinedLatex = outsideNum1 === 1 ? '1' : (outsideNum1 === -1 ? '-1' : `${outsideNum1}`);
+  } else {
+    combinedLatex = `\\dfrac{${outsideNum1}}{${outsideDen0}}`;
+  }
+} else {
+  // Has radical part
+  const radicalPart = (insideDen0 === 1)
+    ? formatRadical(index, `${insideNum0}`)
+    : formatRadical(index, `\\dfrac{${insideNum0}}{${insideDen0}}`);
+  
+  if (outsideDen0 === 1) {
+    // No fraction outside
+    if (outsideNum1 === 1) {
+      combinedLatex = radicalPart;
+    } else if (outsideNum1 === -1) {
+      combinedLatex = `-${radicalPart}`;
+    } else {
+      combinedLatex = `${outsideNum1} \\cdot ${radicalPart}`;
+    }
+  } else {
+    // Fraction with radical in numerator
+    combinedLatex = `\\dfrac{${outsideNum1 === 1 ? '' : outsideNum1 === -1 ? '-' : outsideNum1}${radicalPart}}{${outsideDen0}}`;
+  }
+}
 html += `<p>\\( = ${combinedLatex} \\)</p>`;
 
 
@@ -1933,10 +2000,18 @@ html += `<p>\\( = ${combinedLatex} \\)</p>`;
   let finalInsideDen = insideDen0;
 
   if (finalInsideDen !== 1) {
-    html += `<p><strong>Rationalize denominator (index ${index}):</strong></p>`;
-    const power = Math.pow(finalInsideDen, index - 1);
-    const ratFactor = formatRadical(index, `${power}`);
-    html += `<p>Multiply top and bottom by \\( ${ratFactor} \\).</p>`;
+  html += `<p><strong>Rationalize denominator (index ${index}):</strong></p>`;
+  
+  // Show the rationalization factor more clearly
+  const power = index - 1;
+  let ratFactor;
+  if (power === 1) {
+    ratFactor = formatRadical(index, `${finalInsideDen}`);
+  } else {
+    ratFactor = formatRadical(index, `${finalInsideDen}^{${power}}`);
+  }
+  
+  html += `<p>Multiply top and bottom by \\( ${ratFactor} \\).</p>`;
 
     finalOutsideDen = finalOutsideDen * finalInsideDen;
     finalInsideNum = finalInsideNum * power;
@@ -1949,12 +2024,22 @@ html += `<p>\\( = ${combinedLatex} \\)</p>`;
     finalInsideNum = fromExpMapToInt(inAfter) || 1;
     finalOutsideNum *= pulled;
 
-    const outsideLatex2 = finalOutsideDen === 1
-      ? `${finalOutsideNum === 1 ? '' : finalOutsideNum}`
+    // Build the final rationalized expression clearly
+  let ratCombined;
+  if (finalInsideNum === 1) {
+    // Just a regular fraction now
+    ratCombined = finalOutsideDen === 1 
+      ? `${finalOutsideNum}`
       : `\\dfrac{${finalOutsideNum}}{${finalOutsideDen}}`;
-
-    const insideLatex2 = finalInsideNum === 1 ? '' : formatRadical(index, `${finalInsideNum}`);
-    const ratCombined = insideLatex2 ? `${outsideLatex2} \\cdot ${insideLatex2}` : outsideLatex2;
+  } else {
+    const radPart = formatRadical(index, `${finalInsideNum}`);
+    if (finalOutsideDen === 1) {
+      ratCombined = finalOutsideNum === 1 ? radPart : `${finalOutsideNum} \\cdot ${radPart}`;
+    } else {
+      // Show as numerator radical over denominator (no dot)
+      ratCombined = `\\dfrac{${finalOutsideNum === 1 ? '' : finalOutsideNum}${radPart}}{${finalOutsideDen}}`;
+    }
+  }
 
     html += `<p>\\( = ${ratCombined} \\)</p>`;
     combinedLatex = ratCombined;
