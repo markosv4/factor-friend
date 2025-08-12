@@ -492,6 +492,16 @@ h1, h2 { line-height: 1.2; margin: 8px 0 14px; }
     font-weight:700;
   }
 }
+@media (max-width: 767px){
+  .factor-table-mobile .eq-cell{
+    font-weight: 700;
+    opacity: .9;
+    padding-top: 0;
+    padding-bottom: 4px;
+  }
+  .factor-table-mobile .res-label{ font-weight: 700; text-align: right; }
+  .factor-table-mobile .res-val{ font-weight: 700; color: var(--accent1); text-align: left; }
+}
 
 
 </style>
@@ -876,58 +886,112 @@ function renderFactorTable(mode, primes, maps, values) {
   desktopWrap.appendChild(tbl);
   fragment.appendChild(desktopWrap);
 
-  // ===== MOBILE (transposed to match desktop spirit) =====
-  const mobileWrap = document.createElement('div');
-  mobileWrap.className = 'factor-table-mobile';
-  const mTbl = document.createElement('table');
+  // ===== MOBILE (true transpose of desktop, no left “prime” column) =====
+const mobileWrap = document.createElement('div');
+mobileWrap.className = 'factor-table-mobile';
+const mTbl = document.createElement('table');
 
-  // header: blank corner, then each value with dot columns between
-  {
-    const hdr = document.createElement('tr');
-    const corner = document.createElement('th'); corner.textContent = ''; hdr.appendChild(corner);
-    values.forEach((v, i) => {
-      const th = document.createElement('th'); th.textContent = v; hdr.appendChild(th);
-      if (i < values.length - 1) { const dot = document.createElement('th'); dot.textContent = '·'; hdr.appendChild(dot); }
-    });
-    mTbl.appendChild(hdr);
+/* Header: numbers across, plus a right-most MODE column */
+{
+  const hr = document.createElement('tr');
+  values.forEach(v => {
+    const th = document.createElement('th');
+    th.textContent = v;
+    hr.appendChild(th);
+  });
+  const thMode = document.createElement('th');
+  thMode.textContent = mode.toUpperCase();
+  hr.appendChild(thMode);
+  mTbl.appendChild(hr);
+}
+
+/* Downward “equals” row so it reads like N = (factors going down) */
+{
+  const eq = document.createElement('tr');
+  for (let i = 0; i < values.length; i++){
+    const td = document.createElement('td');
+    td.className = 'eq-cell';
+    td.textContent = '=';
+    eq.appendChild(td);
   }
+  const tdMode = document.createElement('td');
+  tdMode.className = 'eq-cell';
+  tdMode.textContent = '=';
+  eq.appendChild(tdMode);
+  mTbl.appendChild(eq);
+}
 
-  // rows: left cell is prime; then each number’s p^e with dot cells between
-  primes.forEach(p => {
-    const tr = document.createElement('tr');
-    const primeCell = document.createElement('td'); primeCell.textContent = p; tr.appendChild(primeCell);
-    const eMax = maxExp(p), eMin = minExp(p), showG = allHave(p) && eMin > 0;
+/* Rows per prime factor line, with dot ROWS between them */
+const usedPrimes = primes.filter(p => maxExp(p) > 0); // already sorted upstream
+usedPrimes.forEach((p, pi) => {
+  const tr = document.createElement('tr');
 
-    values.forEach((_, idx) => {
-      const e = maps[idx][p] || 0;
-      const td = document.createElement('td');
-      td.innerHTML = e ? (e > 1 ? `${p}<sup>${e}</sup>` : `${p}`) : '';
-      if (mode === 'lcm' && e > 0 && e === eMax) { td.style.color = accent; td.style.fontWeight = '600'; }
-      if (mode === 'gcf' && showG && e === eMin) { td.style.color = accent; td.style.fontWeight = '600'; }
-      tr.appendChild(td);
-      // dot cell between numbers
-      if (idx < values.length - 1) { const d = document.createElement('td'); d.textContent = '·'; tr.appendChild(d); }
-    });
-    mTbl.appendChild(tr);
+  // each number’s column gets p or p^e, no extra label column
+  const eMax = maxExp(p);
+  const eMin = minExp(p);
+  const gAll = allHave(p);
+
+  values.forEach((_, idx) => {
+    const e = maps[idx][p] || 0;
+    const td = document.createElement('td');
+    td.innerHTML = e ? (e > 1 ? `${p}<sup>${e}</sup>` : `${p}`) : '';
+    if (mode === 'lcm' && e > 0 && e === eMax){ td.style.color = 'var(--accent1)'; td.style.fontWeight = '600'; }
+    if (mode === 'gcf' && gAll && e > 0 && e === eMin){ td.style.color = 'var(--accent3)'; td.style.fontWeight = '600'; }
+    tr.appendChild(td);
   });
 
-  // result row
-  {
-    const tr = document.createElement('tr');
-    const label = document.createElement('td'); label.textContent = mode.toUpperCase(); tr.appendChild(label);
-    const td = document.createElement('td'); td.colSpan = values.length; td.style.color = accent; td.style.fontWeight = '700';
-    if (mode === 'lcm') {
-      const parts = primes.map(p => { const e = maxExp(p); return e > 0 ? (e > 1 ? `${p}<sup>${e}</sup>` : `${p}`) : null; }).filter(Boolean);
-      td.innerHTML = parts.length ? parts.join(' · ') : '1';
-    } else {
-      const parts = primes.filter(allHave).map(p => { const e = minExp(p); return e > 1 ? `${p}<sup>${e}</sup>` : `${p}`; });
-      td.innerHTML = parts.length ? parts.join(' · ') : '1';
-    }
-    tr.appendChild(td); mTbl.appendChild(tr);
+  // right-most MODE column = the chosen term for this row
+  const chosen = document.createElement('td');
+  chosen.className = 'res-col';
+  if (mode === 'lcm'){
+    chosen.innerHTML = eMax > 0 ? (eMax > 1 ? `${p}<sup>${eMax}</sup>` : `${p}`) : '';
+    chosen.style.color = 'var(--accent1)';
+  } else {
+    chosen.innerHTML = (gAll && eMin > 0) ? (eMin > 1 ? `${p}<sup>${eMin}</sup>` : `${p}`) : '';
+    chosen.style.color = 'var(--accent3)';
   }
+  tr.appendChild(chosen);
+  mTbl.appendChild(tr);
 
-  mobileWrap.appendChild(mTbl);
-  fragment.appendChild(mobileWrap);
+  // dot row between prime-factor rows to mimic the desktop “·” separators
+  if (pi < usedPrimes.length - 1){
+    const dots = document.createElement('tr');
+    dots.className = 'dot-row';
+    for (let i = 0; i < values.length + 1; i++){ // +1 for MODE column
+      const d = document.createElement('td');
+      d.textContent = '·';
+      dots.appendChild(d);
+    }
+    mTbl.appendChild(dots);
+  }
+});
+
+/* Final result line: label on the left block, product on the right-most column */
+{
+  const tr = document.createElement('tr');
+
+  const lab = document.createElement('td');
+  lab.className = 'res-label';
+  lab.colSpan = values.length;
+  lab.textContent = mode.toUpperCase();
+  tr.appendChild(lab);
+
+  const out = document.createElement('td');
+  out.className = 'res-val';
+  if (mode === 'lcm'){
+    const parts = primes.map(p => { const e = maxExp(p); return e > 0 ? (e > 1 ? `${p}<sup>${e}</sup>` : `${p}`) : null; }).filter(Boolean);
+    out.innerHTML = parts.length ? parts.join(' · ') : '1';
+  } else {
+    const parts = primes.filter(allHave).map(p => { const e = minExp(p); return e > 1 ? `${p}<sup>${e}</sup>` : `${p}`; });
+    out.innerHTML = parts.length ? parts.join(' · ') : '1';
+  }
+  tr.appendChild(out);
+  mTbl.appendChild(tr);
+}
+
+mobileWrap.appendChild(mTbl);
+fragment.appendChild(mobileWrap);
+
   return fragment;
 }
 
