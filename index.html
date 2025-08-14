@@ -453,7 +453,7 @@ h1, h2 { line-height: 1.2; margin: 8px 0 14px; }
 /* Mobile: transpose the desktop look; invisible grid; dot ROWS; right LCM/GCF column */
 @media (max-width: 767px){
   .factor-table-desktop{ display:none }
-  .factor-table-mobile{ display:block }
+  .factor-table-mobile{ display:block; overflow-x: auto; }
 
   .factor-table-mobile table{
     width:100%;
@@ -492,6 +492,7 @@ h1, h2 { line-height: 1.2; margin: 8px 0 14px; }
     font-weight:700;
   }
 }
+
 @media (max-width: 767px){
   .factor-table-mobile .eq-cell{
     font-weight: 700;
@@ -597,9 +598,9 @@ h1, h2 { line-height: 1.2; margin: 8px 0 14px; }
 <div id="tab4Content" class="tab-content">
   <div class="main-box">
     <h2>Quadratic Factorer (ax² + bx + c)</h2>
-    <input type="number" id="quadA" placeholder="a (≠0)" step="any" />
-    <input type="number" id="quadB" placeholder="b" step="any" />
-    <input type="number" id="quadC" placeholder="c" step="any" />
+    <input type="text" id="quadA" placeholder="a (≠ 0)" inputmode="text" />
+    <input type="text" id="quadB" placeholder="b" inputmode="text" />
+    <input type="text" id="quadC" placeholder="c" inputmode="text" />
 
     <!-- 1 button does everything -->
     <button id="quadBtn" class="tool-btn" onclick="solveAndShow()" disabled>
