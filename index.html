@@ -453,12 +453,19 @@ h1, h2 { line-height: 1.2; margin: 8px 0 14px; }
 /* Mobile: transpose the desktop look; invisible grid; dot ROWS; right LCM/GCF column */
 @media (max-width: 767px){
   .factor-table-desktop{ display:none }
-  .factor-table-mobile{ display:block; overflow-x: auto; }
+  .factor-table-mobile{ 
+    display:block; 
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;  /* smooth scrolling on iOS */
+    max-width: 100%;
+    margin: 0 -10px;  /* extend to edges for more scroll room */
+    padding: 0 10px;
+  }
 
   .factor-table-mobile table{
-    width:100%;
+    min-width: max-content;  /* prevent table from compressing */
     border-collapse:separate;
-    border-spacing:0;                 /* no visible grid */
+    border-spacing:0;
     background:transparent;
   }
   .factor-table-mobile th,
@@ -483,7 +490,7 @@ h1, h2 { line-height: 1.2; margin: 8px 0 14px; }
   /* sticky header helps when list is tall */
   .factor-table-mobile thead th{
     position:sticky; top:0;
-    background: var(--paper, #fff);
+    background: var(--glass);
     z-index:1;
   }
 
@@ -1410,28 +1417,205 @@ function computeRoots(workDiv, a, b, c, D) {
     return str;
   }
 
+
+  // Parse fraction or integer input
+// Parse integer / a/b / decimal into an exact fraction with den > 0
+function parseFracInput(str) {
+  str = String(str || '').trim();
+  if (!str) throw new Error('Empty input');
+
+  // Handle leading sign
+  let sign = 1;
+  if (str[0] === '+') { str = str.slice(1).trim(); }
+  else if (str[0] === '-') { sign = -1; str = str.slice(1).trim(); }
+
+  // Case 1: a/b form (both a, b should be integers)
+  if (str.includes('/')) {
+    const [na, da] = str.split('/').map(s => s.trim());
+    if (na === '' || da === '') throw new Error('Invalid fraction');
+    let n = parseInt(na, 10);
+    let d = parseInt(da, 10);
+    if (!Number.isFinite(n) || !Number.isFinite(d) || d === 0) throw new Error('Invalid fraction');
+    // keep denominator positive
+    if (d < 0) { n = -n; d = -d; }
+    const g = gcd(Math.abs(n), d);
+    return { num: sign * (n / g), den: d / g };
+  }
+
+  // Case 2: decimal like 3.125, .5, or 2.
+  if (str.includes('.')) {
+    let [ip = '0', fp = ''] = str.split('.');
+    // strip non-digits from fractional part just in case
+    fp = fp.replace(/[^0-9]/g, '');
+    const k = fp.length;
+    const den = Math.pow(10, k);
+    const absNum = Math.abs(parseInt(ip || '0', 10)) * den + (fp ? parseInt(fp, 10) : 0);
+    let num = absNum;
+    // preserve original integer sign inside part (we already pulled leading sign)
+    if (ip.startsWith('-')) num = -num; // unlikely since we stripped the sign above
+    const g = gcd(Math.abs(num), den);
+    return { num: sign * (num / g), den: den / g };
+  }
+
+  // Case 3: plain integer
+  const n = parseInt(str, 10);
+  if (!Number.isFinite(n)) throw new Error('Invalid number');
+  return { num: sign * n, den: 1 };
+}
+
+
+// LCM function
+function lcm(a, b) {
+  return Math.abs(a * b) / gcd(a, b);
+}
+
+// Format a fractional quadratic expression
+function formatFracQuadratic(fracA, fracB, fracC) {
+  let str = '';
+  
+  // x² term
+  if (fracA.den === 1) {
+    if (fracA.num === 1) str = 'x^2';
+    else if (fracA.num === -1) str = '-x^2';
+    else str = fracA.num + 'x^2';
+  } else {
+    const frac = simplifyFraction(fracA.num, fracA.den);
+    if (frac.numerator < 0) {
+      str = `-\\frac{${Math.abs(frac.numerator)}}{${frac.denominator}}x^2`;
+    } else {
+      str = `\\frac{${frac.numerator}}{${frac.denominator}}x^2`;
+    }
+  }
+  
+  // x term
+  if (fracB.num !== 0) {
+    if (fracB.den === 1) {
+      if (fracB.num > 0) {
+        str += ' + ';
+        if (fracB.num === 1) str += 'x';
+        else str += fracB.num + 'x';
+      } else {
+        str += ' - ';
+        if (fracB.num === -1) str += 'x';
+        else str += (-fracB.num) + 'x';
+      }
+    } else {
+      const frac = simplifyFraction(fracB.num, fracB.den);
+      if (frac.numerator < 0) {
+        str += ` - \\frac{${Math.abs(frac.numerator)}}{${frac.denominator}}x`;
+      } else {
+        str += ` + \\frac{${frac.numerator}}{${frac.denominator}}x`;
+      }
+    }
+  }
+  
+  // constant term
+  if (fracC.num !== 0) {
+    if (fracC.den === 1) {
+      if (fracC.num > 0) {
+        str += ' + ' + fracC.num;
+      } else {
+        str += ' - ' + (-fracC.num);
+      }
+    } else {
+      const frac = simplifyFraction(fracC.num, fracC.den);
+      if (frac.numerator < 0) {
+        str += ` - \\frac{${Math.abs(frac.numerator)}}{${frac.denominator}}`;
+      } else {
+        str += ` + \\frac{${frac.numerator}}{${frac.denominator}}`;
+      }
+    }
+  }
+  
+  return str;
+}
+
   // single button action
     function solveAndShow() {
-      const [a, b, c] = [quadA, quadB, quadC].map(x => parseFloat(x.value));
-      if (a === 0 || isNaN(b) || isNaN(c)) return;
+      // Parse inputs as fractions
+  const inputA = quadA.value.trim();
+  const inputB = quadB.value.trim();
+  const inputC = quadC.value.trim();
+  
+  // Try to parse as fractions first
+  let fracA, fracB, fracC;
+  try {
+    fracA = parseFracInput(inputA);
+    fracB = parseFracInput(inputB);
+    fracC = parseFracInput(inputC);
+  } catch (e) {
+    // Fall back to float parsing for backward compatibility
+    const [a, b, c] = [quadA, quadB, quadC].map(x => parseFloat(x.value));
+    if (a === 0 || isNaN(b) || isNaN(c)) return;
+    fracA = { num: a, den: 1 };
+    fracB = { num: b, den: 1 };
+    fracC = { num: c, den: 1 };
+  }
 
-      quadRes.innerHTML = '';
-      const workDiv = document.createElement('div');
-      workDiv.className = 'quad-steps';
+  if (fracA.num === 0) return;
 
-      const D = b ** 2 - 4 * a * c;
-      const g = factorOutGCD(a, b, c);
-      const a1 = a / g, b1 = b / g, c1 = c / g;
+  quadRes.innerHTML = '';
+  const workDiv = document.createElement('div');
+  let normalFactor = null; // Track normalization factor
+  workDiv.className = 'quad-steps';
 
-      // Display original equation
-      workDiv.innerHTML = `<p>Equation: \\(${formatQuadratic(a, b, c)} = 0\\)</p>`;
+  // Check if we have fractional coefficients
+  const hasFractions = fracA.den !== 1 || fracB.den !== 1 || fracC.den !== 1;
+  
+  let a, b, c;
+  
+  if (hasFractions) {
+  // Display original fractional equation
+  workDiv.innerHTML = `<p>Original equation: \\(${formatFracQuadratic(fracA, fracB, fracC)} = 0\\)</p>`;
+  
+  // Find LCM of denominators
+  const lcmDen = lcm(lcm(fracA.den, fracB.den), fracC.den);
+  
+  // Multiply through by LCM to clear fractions
+  const newA = (fracA.num * lcmDen) / fracA.den;
+  const newB = (fracB.num * lcmDen) / fracB.den;
+  const newC = (fracC.num * lcmDen) / fracC.den;
+  
+  // Find GCD of the cleared integers (positive)
+    const g0 = gcd(Math.abs(newA), gcd(Math.abs(newB), Math.abs(newC)));
 
-      // Show GCF factoring if applicable
-      if (g !== 1) {
-        workDiv.innerHTML += `<p>Factoring out GCF: \\(${g}\\)</p>`;
-        workDiv.innerHTML += `<p>Reduced equation: \\(${formatQuadratic(a1, b1, c1)} = 0\\)</p>`;
-      }
+    // Make the OUTSIDE factor carry the sign of a, so inside we have a > 0
+    const gSigned = (newA < 0 ? -g0 : g0);
 
+    // Normalised coefficients (leading coefficient now positive)
+    a = newA / gSigned;
+    b = newB / gSigned;
+    c = newC / gSigned;
+
+    // Outside normalising factor (may be negative, denominator kept positive)
+    normalFactor = simplifyFraction(gSigned, lcmDen);
+
+  
+  workDiv.innerHTML += `<p><strong>Normalize by factoring out \\(${formatFraction(normalFactor)}\\):</strong></p>`;
+  workDiv.innerHTML += `<p>\\(${formatFraction(normalFactor)}(${formatQuadratic(a, b, c)}) = 0\\)</p>`;
+  workDiv.innerHTML += `<p>Since the factor \\(${formatFraction(normalFactor)} \\neq 0\\), we solve:</p>`;
+  workDiv.innerHTML += `<p>\\(${formatQuadratic(a, b, c)} = 0\\)</p>`;
+} else {
+    // No fractions, proceed as normal
+    a = fracA.num;
+    b = fracB.num;
+    c = fracC.num;
+    workDiv.innerHTML = `<p>Equation: \\(${formatQuadratic(a, b, c)} = 0\\)</p>`;
+  }
+
+  // Continue with the rest of the solving process
+  const D = b ** 2 - 4 * a * c;
+  const g = factorOutGCD(a, b, c);
+  const a1 = a / g, b1 = b / g, c1 = c / g;
+
+  // Show GCF factoring if applicable (and we haven't already normalized)
+  if (g !== 1 && !hasFractions) {
+    workDiv.innerHTML += `<p>Factoring out GCF: \\(${g}\\)</p>`;
+    workDiv.innerHTML += `<p>Reduced equation: \\(${formatQuadratic(a1, b1, c1)} = 0\\)</p>`;
+  } else if (g !== 1 && hasFractions) {
+    workDiv.innerHTML += `<p>Factoring out additional GCF: \\(${g}\\)</p>`;
+    workDiv.innerHTML += `<p>Further reduced: \\(${formatQuadratic(a1, b1, c1)} = 0\\)</p>`;
+  }
       /* ---------- Case: b = 0 (No linear term) ---------- */
 if (b1 === 0) {
   if (c1 < 0) {
@@ -1457,13 +1641,15 @@ if (b1 === 0) {
           factor = `(${rootA}x + ${rootC})(${rootA}x - ${rootC})`;
         }
         const fullFactor = g === 1 ? factor : `${g}${factor}`;
-        workDiv.innerHTML += `<p>Factorization: \\(${fullFactor} = 0\\)</p>`;
-        
-        // Show properly simplified solutions
-        const sol1Frac = simplifyFraction(rootC, rootA);
-        const sol2Frac = simplifyFraction(-rootC, rootA);
-        
-        workDiv.innerHTML += `<p>Solutions: \\(x = ${formatFraction(sol2Frac)}\\) and \\(x = ${formatFraction(sol1Frac)}\\)</p>`;
+        // Original code showing the factorization
+          workDiv.innerHTML += `<p>Factorization: \\(${fullFactor} = 0\\)</p>`;
+
+          // Show properly simplified solutions
+          const sol1Frac = simplifyFraction(rootC, rootA);
+          const sol2Frac = simplifyFraction(-rootC, rootA);
+
+          workDiv.innerHTML += `<p>Solutions: \\(x = ${formatFraction(sol2Frac)}\\) and \\(x = ${formatFraction(sol1Frac)}\\)</p>`;
+
             } else {
   // Not perfect squares - solve algebraically
   workDiv.innerHTML += `<p><strong>Case:</strong> No linear term</p>`;
@@ -1713,7 +1899,17 @@ if (b1 === 0) {
       else {
         tryACMethod(workDiv, a, b, c, g, a1, b1, c1);
       }
-      
+      // Add final complete form if we normalized with fractions
+if (normalFactor) {
+  // Extract the last factorization from the work (look for "Factorization:" in the HTML)
+  const factorMatch = workDiv.innerHTML.match(/Factorization:\s*\\?\(([^=]+)\s*=\s*0/);
+  if (factorMatch) {
+    const innerFactor = factorMatch[1].replace(/\\/g, '');
+    const fracStr = formatFraction(normalFactor);
+    workDiv.innerHTML += `<hr style="margin: 20px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">`;
+    workDiv.innerHTML += `<p><strong>Complete Factored Form:</strong> \\(${fracStr}${innerFactor} = 0\\)</p>`;
+  }
+}
       quadRes.appendChild(workDiv);
       
       // Wait for MathJax to load before typesetting
@@ -1757,6 +1953,50 @@ const simplifyRadicalBtn = document.getElementById('simplifyRadicalBtn');
 const radicalResult = document.getElementById('radicalResult');
 
 // -------- LaTeX + utility helpers --------
+// Convert a string coefficient into an exact rational {num, den} with den > 0
+function parseCoeffToFraction(raw) {
+  if (raw == null) return { num: 0, den: 1 };
+  let s = String(raw).trim();
+  if (s === "" || s === "+" || s === "-") return { num: 0, den: 1 };
+
+  // Normalise sign
+  let sign = 1;
+  if (s[0] === "+") s = s.slice(1);
+  if (s[0] === "-") { sign = -1; s = s.slice(1); }
+  s = s.trim();
+
+  // Case 1: fraction a/b
+  if (s.includes("/")) {
+    const [na, da] = s.split("/").map(t => t.trim());
+    const n = sign * parseInt(na, 10);
+    const d = parseInt(da, 10);
+    if (!Number.isFinite(n) || !Number.isFinite(d) || d === 0) return { num: 0, den: 1 }; // guard
+    const g = gcd(Math.abs(n), Math.abs(d));
+    const dn = Math.abs(d) / g;
+    const nn = (d < 0 ? -n : n) / g; // keep denominator positive
+    return { num: nn, den: dn };
+  }
+
+  // Case 2: decimal like 3.125 or .5 or 2.
+  if (s.includes(".")) {
+    const [intPartRaw, fracPartRaw = ""] = s.split(".");
+    const intPart = intPartRaw === "" ? "0" : intPartRaw;
+    const fracPart = fracPartRaw.replace(/[^0-9]/g, "");
+    const k = fracPart.length;
+    const den = Math.pow(10, k);
+    const absNum = Math.abs(parseInt(intPart, 10)) * den + (fracPart === "" ? 0 : parseInt(fracPart, 10));
+    const num = sign * (intPartRaw.startsWith("-") ? -absNum : absNum); // already handled sign above
+    const g = gcd(Math.abs(num), den);
+    return { num: num / g, den: den / g };
+  }
+
+  // Case 3: plain integer
+  const n = sign * parseInt(s, 10);
+  if (!Number.isFinite(n)) return { num: 0, den: 1 };
+  return { num: n, den: 1 };
+}
+
+
 function formatRadical(index, radicandLatex) {
   return index === 2 ? `\\sqrt{${radicandLatex}}` : `\\sqrt[${index}]{${radicandLatex}}`;
 }
