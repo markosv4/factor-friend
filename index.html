@@ -453,50 +453,30 @@ h1, h2 { line-height: 1.2; margin: 8px 0 14px; }
 /* Mobile: transpose the desktop look; invisible grid; dot ROWS; right LCM/GCF column */
 @media (max-width: 767px){
   .factor-table-desktop{ display:none }
-  .factor-table-mobile{ 
-    display:block; 
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;  /* smooth scrolling on iOS */
+
+  .factor-table-mobile{
+    display:block;
+    margin: 0;
+    padding: 0;
     max-width: 100%;
-    margin: 0 -10px;  /* extend to edges for more scroll room */
-    padding: 0 10px;
   }
 
-  .factor-table-mobile table{
-    min-width: max-content;  /* prevent table from compressing */
-    border-collapse:separate;
-    border-spacing:0;
-    background:transparent;
-  }
-  .factor-table-mobile th,
-  .factor-table-mobile td{
-    border:0;
-    padding:6px 8px;
-    text-align:center;
-    font-size:1rem;
-    white-space:nowrap;
-  }
-  .factor-table-mobile thead th{
-    font-weight:700;
-  }
-
-  /* dot rows between prime rows (vertical multiplication) */
-  .factor-table-mobile .dot-row td{
-    padding:2px 8px;
-    line-height:1;
-    opacity:.7;
-  }
-
-  /* sticky header helps when list is tall */
-  .factor-table-mobile thead th{
-    position:sticky; top:0;
+  .prime-card{
     background: var(--glass);
-    z-index:1;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
   }
-
-  /* right-most LCM/GCF column gets a tad more space */
-  .factor-table-mobile .res-col{
-    font-weight:700;
+  .prime-title{
+    font-weight: 700;
+    color: var(--accent1);
+    margin-bottom: 0.25rem;
+  }
+  .prime-body{
+    font-size: 1rem;
+    line-height: 1.4;
+    word-break: break-word;
   }
 }
 
@@ -682,7 +662,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.showTab = showTab;
 
   /* ---------- Common Utilities ---------- */
-  
+ 
+
+
   const getFactorPairs = n => {
     const p = [];
     for (let i = 1; i <= Math.sqrt(n); i++) if (n % i === 0) p.push([i, n / i]);
@@ -894,24 +876,43 @@ function renderFactorTable(mode, primes, maps, values) {
   desktopWrap.appendChild(tbl);
   fragment.appendChild(desktopWrap);
 
-  // ===== MOBILE (true transpose of desktop, no left “prime” column) =====
+  // ===== MOBILE (stacked prime-card layout) =====
 const mobileWrap = document.createElement('div');
 mobileWrap.className = 'factor-table-mobile';
-const mTbl = document.createElement('table');
 
-/* Header: numbers across, plus a right-most MODE column */
-{
-  const hr = document.createElement('tr');
-  values.forEach(v => {
-    const th = document.createElement('th');
-    th.textContent = v;
-    hr.appendChild(th);
-  });
-  const thMode = document.createElement('th');
-  thMode.textContent = mode.toUpperCase();
-  hr.appendChild(thMode);
-  mTbl.appendChild(hr);
-}
+values.forEach((val, idx) => {
+  const card = document.createElement('div');
+  card.className = 'prime-card';
+  card.style.animationDelay = `${idx * 0.08}s`;
+  card.innerHTML = `
+    <div class="prime-title">${val} =</div>
+    <div class="prime-body">${expMapToHTML(maps[idx])}</div>
+  `;
+  mobileWrap.appendChild(card);
+});
+
+// final LCM/GCF card
+const resCard = document.createElement('div');
+resCard.className = 'prime-card';
+resCard.style.borderLeft = `4px solid ${mode === 'lcm' ? 'var(--accent1)' : 'var(--accent3)'}`;
+const parts = mode === 'lcm'
+  ? primes.map(p => {
+      const e = Math.max(...maps.map(m => m[p] || 0));
+      return e > 0 ? (e > 1 ? `${p}<sup>${e}</sup>` : `${p}`) : null;
+    }).filter(Boolean)
+  : primes.filter(p => maps.every(m => m[p] || 0 > 0))
+        .map(p => {
+          const e = Math.min(...maps.map(m => m[p] || 0));
+          return e > 1 ? `${p}<sup>${e}</sup>` : `${p}`;
+        });
+
+resCard.innerHTML = `
+  <div class="prime-title">${mode.toUpperCase()} =</div>
+  <div class="prime-body">${parts.length ? parts.join(' · ') : '1'}</div>
+`;
+mobileWrap.appendChild(resCard);
+
+fragment.appendChild(mobileWrap);
 
 /* Downward “equals” row so it reads like N = (factors going down) */
 {
