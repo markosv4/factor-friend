@@ -2283,30 +2283,35 @@ if (finalInsideDen !== 1) {
   
   html += `<p>Current form: \\( ${currentCoef}${formatRadical(index, `\\dfrac{${finalInsideNum}}{${finalInsideDen}}`)} \\)</p>`;
   
-  // Multiply by √denominator/√denominator
-  const ratFactor = finalInsideDen;
-  html += `<p>Multiply by \\( \\dfrac{${formatRadical(index, `${ratFactor}`)}}{${formatRadical(index, `${ratFactor}`)}} \\):</p>`;
-  
-  // When index=2, √n × √n = n directly
-  // For higher indices, we'd need more complex logic
   if (index === 2) {
-    // For square roots, multiplication gives us the number directly
-    const newInsideNum = finalInsideNum * ratFactor;
+    // For square roots: multiply by √den/√den to get den outside
+    const ratFactor = finalInsideDen;
+    html += `<p>Multiply by \\( \\dfrac{${formatRadical(index, `${ratFactor}`)}}{${formatRadical(index, `${ratFactor}`)}} \\):</p>`;
     
-    // Show the simplified result after multiplication
+    const newInsideNum = finalInsideNum * ratFactor;
     html += `<p>\\( = ${currentCoef}\\dfrac{${formatRadical(index, `${newInsideNum}`)}}{${ratFactor}} \\)</p>`;
     
-    // Update the values
     finalOutsideDen *= ratFactor;
     finalInsideNum = newInsideNum;
     finalInsideDen = 1;
   } else {
-    // For other indices, need different handling
-    // This is more complex for cube roots etc.
-    const newInsideNum = finalInsideNum * Math.pow(ratFactor, index - 1);
-    html += `<p>\\( = ${currentCoef}\\dfrac{${formatRadical(index, `${newInsideNum}`)}}{${ratFactor}} \\)</p>`;
+    // For nth roots where n > 2: need to multiply by the (n-1)th power
+    // For cube root: multiply by ∛(den²)/∛(den²)
+    // For 4th root: multiply by ∜(den³)/∜(den³)
+    const power = index - 1;
+    const ratFactor = Math.pow(finalInsideDen, power);
     
-    finalOutsideDen *= ratFactor;
+    html += `<p>For index ${index}, multiply by \\( \\dfrac{${formatRadical(index, `${finalInsideDen}^{${power}}`)}}{${formatRadical(index, `${finalInsideDen}^{${power}}`)}} = \\dfrac{${formatRadical(index, `${ratFactor}`)}}{${formatRadical(index, `${ratFactor}`)}} \\):</p>`;
+    
+    const newInsideNum = finalInsideNum * ratFactor;
+    const newInsideDen = finalInsideDen * ratFactor; // This becomes den^index
+    
+    // When we have den^index inside an index-th root, it comes out as den
+    html += `<p>\\( = ${currentCoef}\\dfrac{${formatRadical(index, `${newInsideNum}`)}}{${formatRadical(index, `${newInsideDen}`)}} \\)</p>`;
+    html += `<p>Since \\( ${formatRadical(index, `${newInsideDen}`)} = ${formatRadical(index, `${finalInsideDen}^{${index}}`)} = ${finalInsideDen} \\):</p>`;
+    html += `<p>\\( = ${currentCoef}\\dfrac{${formatRadical(index, `${newInsideNum}`)}}{${finalInsideDen}} \\)</p>`;
+    
+    finalOutsideDen *= finalInsideDen;
     finalInsideNum = newInsideNum;
     finalInsideDen = 1;
   }
