@@ -12,6 +12,7 @@
       --correct: #4ade80;
       --wrong: #ef4444;
       --streak: #f59e0b;
+      --question-hue: 200;
     }
 
     * { box-sizing: border-box; }
@@ -573,6 +574,251 @@
         height: 25px;
     }
     }
+
+    /* Epic explosion effects */
+.explosion-particle {
+  position: absolute;
+  width: 12px; 
+  height: 12px;
+  margin-left: -6px; 
+  margin-top: -6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.explosion-particle.fire {
+  background: radial-gradient(circle, #ff6b35, #f7931e);
+  box-shadow: 0 0 10px #ff6b35;
+  animation: fireExplode 0.8s cubic-bezier(.25,.46,.45,.94) forwards;
+}
+
+.explosion-particle.spark {
+  background: radial-gradient(circle, #ffd700, #ffff00);
+  box-shadow: 0 0 8px #ffd700;
+  animation: sparkExplode 0.9s cubic-bezier(.25,.46,.45,.94) forwards;
+}
+
+.explosion-particle.smoke {
+  background: radial-gradient(circle, rgba(200,200,200,0.8), rgba(150,150,150,0.3));
+  animation: smokeExplode 1.2s ease-out forwards;
+}
+
+@keyframes fireExplode {
+  0% { 
+    transform: translate3d(0,0,0) scale(0.3) rotate(0deg); 
+    opacity: 1; 
+  }
+  30% { 
+    transform: translate3d(var(--dx), var(--dy), 0) scale(1.2) rotate(180deg); 
+    opacity: 0.9; 
+  }
+  100% { 
+    transform: translate3d(calc(var(--dx) * 2), calc(var(--dy) * 2), 0) scale(0.1) rotate(360deg); 
+    opacity: 0; 
+  }
+}
+
+@keyframes sparkExplode {
+  0% { 
+    transform: translate3d(0,0,0) scale(0.5) rotate(0deg); 
+    opacity: 1; 
+  }
+  40% { 
+    transform: translate3d(var(--dx), var(--dy), 0) scale(1) rotate(270deg); 
+    opacity: 1; 
+  }
+  100% { 
+    transform: translate3d(calc(var(--dx) * 1.8), calc(var(--dy) * 1.8), 0) scale(0.2) rotate(540deg); 
+    opacity: 0; 
+  }
+}
+
+@keyframes smokeExplode {
+  0% { 
+    transform: translate3d(0,0,0) scale(0.2); 
+    opacity: 0.6; 
+  }
+  50% { 
+    transform: translate3d(calc(var(--dx) * 0.5), calc(var(--dy) * 0.5), 0) scale(2); 
+    opacity: 0.3; 
+  }
+  100% { 
+    transform: translate3d(var(--dx), var(--dy), 0) scale(3); 
+    opacity: 0; 
+  }
+}
+
+.shockwave {
+  position: absolute;
+  border: 4px solid rgba(255, 215, 0, 0.8);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: shockwaveExpand 0.6s ease-out forwards;
+  z-index: 2;
+}
+
+@keyframes shockwaveExpand {
+  0% { 
+    width: 20px; 
+    height: 20px; 
+    margin-left: -10px; 
+    margin-top: -10px; 
+    opacity: 1; 
+    border-width: 4px; 
+  }
+  100% { 
+    width: 200px; 
+    height: 200px; 
+    margin-left: -100px; 
+    margin-top: -100px; 
+    opacity: 0; 
+    border-width: 1px; 
+  }
+}
+
+.screen-shake {
+  animation: screenShake 0.4s ease-in-out;
+}
+
+@keyframes screenShake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-3px) translateY(1px); }
+  20% { transform: translateX(3px) translateY(-1px); }
+  30% { transform: translateX(-2px) translateY(2px); }
+  40% { transform: translateX(2px) translateY(-2px); }
+  50% { transform: translateX(-1px) translateY(1px); }
+  60% { transform: translateX(1px) translateY(-1px); }
+  70% { transform: translateX(-2px) translateY(0px); }
+  80% { transform: translateX(2px) translateY(0px); }
+  90% { transform: translateX(-1px) translateY(0px); }
+}
+
+/* Special milestone animations */
+.milestone-celebration {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+  animation: fadeOut 1.5s ease-in forwards;
+  animation-delay: 1s;
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.milestone-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  font-weight: 900;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  animation: textPulse 1.5s ease-out;
+}
+
+@keyframes textPulse {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--confetti-color, #f00);
+  animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
+  0% { 
+    transform: translateY(-20px) rotate(0deg); 
+    opacity: 1;
+  }
+  90% { 
+    opacity: 1;
+  }
+  100% { 
+    transform: translateY(100vh) rotate(360deg); 
+    opacity: 0;
+  }
+}
+
+.firework {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  animation: fireworkExplode 0.8s ease-out forwards;
+}
+
+@keyframes fireworkExplode {
+  0% { 
+    transform: translate(var(--startX), var(--startY)) scale(0);
+    opacity: 1;
+  }
+  100% { 
+    transform: translate(var(--endX), var(--endY)) scale(1);
+    opacity: 0;
+  }
+}
+
+.star-burst {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, #ffdd00, transparent 70%);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: starBurst 1s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes starBurst {
+  0% { 
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% { 
+    transform: translate(-50%, -50%) scale(3);
+    opacity: 0;
+  }
+}
+
+/* Special milestone specific styles */
+.milestone-7 .milestone-text {
+  color: #ff6b6b;
+  background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.milestone-10 .milestone-text {
+  color: #4ecdc4;
+  background: linear-gradient(45deg, #4ecdc4, #556270);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.milestone-15 .milestone-text {
+  color: #ffd93d;
+  background: linear-gradient(45deg, #ffd93d, #ff6b6b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
   </style>
 </head>
 <body>
@@ -681,6 +927,8 @@
     let gameActive = false;
     let gamePaused = false;
     let spawnTimeouts = [];
+    let nextQuestionData = null;
+    let questionHue = 200;
 
     // --- Utils ---
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -744,6 +992,9 @@
       // Start the game
       gameActive = true;
       gamePaused = false;
+      
+      // Preload the first question
+      preloadNextQuestion();
       generateQuestion();
     }
 
@@ -779,28 +1030,103 @@
     }
 
     function makeParticles(x, y, baseSize, isStreak = false) {
-      const count = randInt(8, 12);
-      for (let i = 0; i < count; i++) {
-        const p = document.createElement('div');
-        p.className = isStreak ? 'particle streak' : 'particle';
-        p.style.left = x + 'px';
-        p.style.top = y + 'px';
+      if (isStreak && streak >= 3) {
+        // Epic explosion for streaks of 3+
+        makeExplosion(x, y, baseSize);
+      } else {
+        // Regular particles
+        const count = randInt(8, 12);
+        for (let i = 0; i < count; i++) {
+          const p = document.createElement('div');
+          p.className = 'particle';
+          p.style.left = x + 'px';
+          p.style.top = y + 'px';
 
-        const angle = randFloat(0, Math.PI * 2);
-        const dist = randFloat(baseSize * 0.3, baseSize * 0.8);
-        const dx = Math.cos(angle) * dist;
-        const dy = Math.sin(angle) * dist;
-        p.style.setProperty('--dx', dx.toFixed(1) + 'px');
-        p.style.setProperty('--dy', dy.toFixed(1) + 'px');
+          const angle = randFloat(0, Math.PI * 2);
+          const dist = randFloat(baseSize * 0.3, baseSize * 0.8);
+          const dx = Math.cos(angle) * dist;
+          const dy = Math.sin(angle) * dist;
+          p.style.setProperty('--dx', dx.toFixed(1) + 'px');
+          p.style.setProperty('--dy', dy.toFixed(1) + 'px');
 
-        if (!isStreak) {
           const hue = randInt(180, 220);
           const sat = randInt(60, 85);
           p.style.background = `radial-gradient(circle at 30% 30%, hsla(${hue},100%,98%,0.95), hsla(${hue}, ${sat}%, 70%, 0.9))`;
-        }
 
-        stage.appendChild(p);
-        setTimeout(() => p.remove(), 420);
+          stage.appendChild(p);
+          setTimeout(() => p.remove(), 420);
+        }
+      }
+    }
+
+    function makeExplosion(x, y, baseSize) {
+      // Screen shake effect
+      document.body.classList.add('screen-shake');
+      setTimeout(() => document.body.classList.remove('screen-shake'), 400);
+      
+      // Shockwave
+      const shockwave = document.createElement('div');
+      shockwave.className = 'shockwave';
+      shockwave.style.left = x + 'px';
+      shockwave.style.top = y + 'px';
+      stage.appendChild(shockwave);
+      setTimeout(() => shockwave.remove(), 600);
+      
+      // Fire particles
+      const fireCount = randInt(15, 20);
+      for (let i = 0; i < fireCount; i++) {
+          const p = document.createElement('div');
+          p.className = 'explosion-particle fire';
+          p.style.left = x + 'px';
+          p.style.top = y + 'px';
+
+          const angle = randFloat(0, Math.PI * 2);
+          const dist = randFloat(baseSize * 0.8, baseSize * 1.5);
+          const dx = Math.cos(angle) * dist;
+          const dy = Math.sin(angle) * dist;
+          p.style.setProperty('--dx', dx.toFixed(1) + 'px');
+          p.style.setProperty('--dy', dy.toFixed(1) + 'px');
+
+          stage.appendChild(p);
+          setTimeout(() => p.remove(), 800);
+      }
+      
+      // Sparks
+      const sparkCount = randInt(12, 18);
+      for (let i = 0; i < sparkCount; i++) {
+          const p = document.createElement('div');
+          p.className = 'explosion-particle spark';
+          p.style.left = x + 'px';
+          p.style.top = y + 'px';
+
+          const angle = randFloat(0, Math.PI * 2);
+          const dist = randFloat(baseSize * 1.2, baseSize * 2);
+          const dx = Math.cos(angle) * dist;
+          const dy = Math.sin(angle) * dist;
+          p.style.setProperty('--dx', dx.toFixed(1) + 'px');
+          p.style.setProperty('--dy', dy.toFixed(1) + 'px');
+
+          stage.appendChild(p);
+          setTimeout(() => p.remove(), 900);
+      }
+      
+      // Smoke clouds
+      const smokeCount = randInt(6, 10);
+      for (let i = 0; i < smokeCount; i++) {
+          const p = document.createElement('div');
+          p.className = 'explosion-particle smoke';
+          p.style.left = x + 'px';
+          p.style.top = y + 'px';
+
+          const angle = randFloat(0, Math.PI * 2);
+          const dist = randFloat(baseSize * 0.4, baseSize * 1);
+          const dx = Math.cos(angle) * dist;
+          const dy = Math.sin(angle) * dist;
+          p.style.setProperty('--dx', dx.toFixed(1) + 'px');
+          p.style.setProperty('--dy', dy.toFixed(1) + 'px');
+
+          stage.appendChild(p);
+          setTimeout(() => p.remove(), 1200);
       }
     }
 
@@ -829,6 +1155,70 @@
       setTimeout(() => reveal.remove(), 1500);
     }
 
+    // Special milestone celebrations
+    function celebrateMilestone(count) {
+      const celebration = document.createElement('div');
+      celebration.className = `milestone-celebration milestone-${count}`;
+      
+      const text = document.createElement('div');
+      text.className = 'milestone-text';
+      
+      if (count === 7) {
+        text.textContent = '7 in a row!\nAmazing!';
+      } else if (count === 10) {
+        text.textContent = '10 in a row!\nIncredible!';
+      } else if (count === 15) {
+        text.textContent = '15 in a row!\nUnstoppable!';
+      }
+      
+      celebration.appendChild(text);
+      
+      // Add confetti
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = `${randInt(0, 100)}%`;
+        confetti.style.top = '-10px';
+        confetti.style.setProperty('--confetti-color', `hsl(${randInt(0, 360)}, 100%, 50%)`);
+        confetti.style.animationDuration = `${randFloat(1, 3)}s`;
+        confetti.style.animationDelay = `${randFloat(0, 0.5)}s`;
+        celebration.appendChild(confetti);
+      }
+      
+      // Add fireworks
+      for (let i = 0; i < 10; i++) {
+        setTimeout(() => {
+          const startX = randInt(20, 80);
+          const startY = randInt(20, 80);
+          
+          for (let j = 0; j < 20; j++) {
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            firework.style.left = `${startX}%`;
+            firework.style.top = `${startY}%`;
+            firework.style.backgroundColor = `hsl(${randInt(0, 360)}, 100%, 60%)`;
+            
+            const angle = randFloat(0, Math.PI * 2);
+            const distance = randFloat(30, 100);
+            const endX = Math.cos(angle) * distance;
+            const endY = Math.sin(angle) * distance;
+            
+            firework.style.setProperty('--startX', `0px`);
+            firework.style.setProperty('--startY', `0px`);
+            firework.style.setProperty('--endX', `${endX}px`);
+            firework.style.setProperty('--endY', `${endY}px`);
+            
+            celebration.appendChild(firework);
+          }
+        }, i * 100);
+      }
+      
+      document.body.appendChild(celebration);
+      setTimeout(() => {
+        celebration.remove();
+      }, 2500);
+    }
+
     // --- Lives system ---
     function updateLives() {
       livesEl.innerHTML = '';
@@ -847,25 +1237,25 @@
         }
     }
 
-        function gameOver() {
-        gameActive = false;
-        acceptingInput = false;
+    function gameOver() {
+      gameActive = false;
+      acceptingInput = false;
 
-        // Clear all timeouts and bubbles
-        spawnTimeouts.forEach(timeout => clearTimeout(timeout));
-        spawnTimeouts = [];
-        stage.querySelectorAll('.bubble').forEach(bubble => bubble.remove());
+      // Clear all timeouts and bubbles
+      spawnTimeouts.forEach(timeout => clearTimeout(timeout));
+      spawnTimeouts = [];
+      stage.querySelectorAll('.bubble').forEach(bubble => bubble.remove());
 
-        showFeedback(`Game Over! Final Score: ${score}`, false);
+      showFeedback(`Game Over! Final Score: ${score}`, false);
 
-        // Show menu after a delay
-        setTimeout(() => {
+      // Show menu after a delay
+      setTimeout(() => {
         showMenu();
-        }, 2000);
-        }
+      }, 2000);
+    }
 
-        // --- Bubble creation ---
-    function createBubble(value, isAnswer, isPowerUp = false, delay = 0) {
+    // --- Bubble creation ---
+    function createBubble(value, isAnswer, isPowerUp = false, delay = 0, questionId) {
         if (!gameActive) return;
 
         const timeout = setTimeout(() => {
@@ -876,6 +1266,7 @@
         bubble.dataset.value = String(value);
         bubble.dataset.answer = isAnswer ? '1' : '0';
         bubble.dataset.powerUp = isPowerUp ? '1' : '0';
+        bubble.dataset.questionId = questionId;
 
         const size = randInt(60, 80);
         bubble.style.width = size + 'px';
@@ -888,9 +1279,9 @@
         const fallDuration = speeds[currentSpeed].duration;
         bubble.style.animationDuration = `${fallDuration}ms`;
 
+        // Apply question-specific hue for visual distinction
         if (!isPowerUp) {
-        const hue = randInt(180, 220);
-        bubble.style.filter = `hue-rotate(${hue}deg)`;
+          bubble.style.filter = `hue-rotate(${questionHue}deg)`;
         }
 
         const label = document.createElement('div');
@@ -898,113 +1289,141 @@
         
         // Add underline for 6s and 9s to distinguish them
         if (value === 6 || value === 9 || String(value).includes('6') || String(value).includes('9')) {
-        label.classList.add('underlined');
+          label.classList.add('underlined');
         }
         
         label.textContent = isPowerUp ? '✨' : value;
         bubble.appendChild(label);
 
         bubble.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        onBubbleClick(bubble, size);
+          e.preventDefault();
+          onBubbleClick(bubble, size);
         });
         
         stage.appendChild(bubble);
 
         // Remove bubble when animation ends (fell off screen)
         setTimeout(() => {
-        if (bubble.parentNode && gameActive && !gamePaused) {
+          if (bubble.parentNode && gameActive && !gamePaused && 
+              parseInt(bubble.dataset.questionId) === questionId) {
             // Bubble fell off screen without being clicked
             if (isAnswer) {
-            // Player missed the correct answer
-            loseLife();
-            streak = 0;
-            rounds++;
-            updateScore();
-            showFeedback('Missed!', false);
-            showAnswerReveal(currentAnswer);
-            stageFlash();
-            
-            // Generate new question after missing
-            setTimeout(() => {
+              // Player missed the correct answer
+              loseLife();
+              streak = 0;
+              rounds++;
+              updateScore();
+              showFeedback('Missed!', false);
+              showAnswerReveal(currentAnswer);
+              stageFlash();
+              
+              // Generate new question after missing
+              setTimeout(() => {
                 if (gameActive) generateQuestion();
-            }, 1500);
+              }, 1500);
             }
             bubble.remove();
-        }
+          }
         }, fallDuration + 100);
         
-    }, delay);
+      }, delay);
 
-    spawnTimeouts.push(timeout);
+      spawnTimeouts.push(timeout);
     }
 
-        // --- Round generation ---
-        function generateQuestion() {
-        if (!gameActive || gamePaused) return;
+    // Preload next question data
+    function preloadNextQuestion() {
+      const diff = difficulties[currentDifficulty];
+      const a = randInt(diff.min, diff.max);
+      const b = randInt(diff.min, diff.max);
+      const product = a * b;
 
-        // Clear any existing timeouts
-        spawnTimeouts.forEach(timeout => clearTimeout(timeout));
-        spawnTimeouts = [];
+      const set = new Set([product]);
 
-        const diff = difficulties[currentDifficulty];
-        const a = randInt(diff.min, diff.max);
-        const b = randInt(diff.min, diff.max);
-        const product = a * b;
-        currentAnswer = product;
-
-        qEl.textContent = `${a} × ${b} = ?`;
-
-        const set = new Set([product]);
-
-        // Generate plausible wrong answers
-        const neighbours = [
+      // Generate plausible wrong answers
+      const neighbours = [
         a * (b - 1), a * (b + 1),
         (a - 1) * b, (a + 1) * b,
         product - a, product + a,
         product - b, product + b,
-        ].filter(n => Number.isFinite(n) && n > 0);
+      ].filter(n => Number.isFinite(n) && n > 0);
 
-        for (const n of neighbours) if (set.size < NUM_CHOICES) set.add(n);
+      for (const n of neighbours) if (set.size < NUM_CHOICES) set.add(n);
 
-        while (set.size < NUM_CHOICES) {
+      while (set.size < NUM_CHOICES) {
         const x = randInt(diff.min, diff.max);
         const y = randInt(diff.min, diff.max);
         if (x * y !== product) set.add(x * y);
-        }
+      }
 
-        const choices = Array.from(set).sort(() => Math.random() - 0.5);
+      const choices = Array.from(set).sort(() => Math.random() - 0.5);
 
-        // Sometimes add a power-up bubble (15% chance when streak >= 3)
-        const shouldAddPowerUp = streak >= 3 && Math.random() < 0.15;
+      // Sometimes add a power-up bubble (15% chance when streak >= 3)
+      const shouldAddPowerUp = streak >= 3 && Math.random() < 0.15;
 
-        // Spawn bubbles with delays
-        choices.forEach((val, index) => {
+      nextQuestionData = {
+        a, b, product, choices, shouldAddPowerUp
+      };
+    }
+
+    // --- Round generation ---
+    function generateQuestion() {
+      if (!gameActive || gamePaused) return;
+
+      // Use preloaded question data or create new if none exists
+      if (!nextQuestionData) {
+        preloadNextQuestion();
+      }
+
+      const { a, b, product, choices, shouldAddPowerUp } = nextQuestionData;
+      currentAnswer = product;
+
+      // Update question display
+      qEl.textContent = `${a} × ${b} = ?`;
+
+      // Change hue for the next set of bubbles to visually distinguish questions
+      questionHue = (questionHue + 40) % 360;
+      document.documentElement.style.setProperty('--question-hue', `${questionHue}deg`);
+
+      // Spawn bubbles with delays
+      choices.forEach((val, index) => {
         const isAnswer = val === product;
         const isPowerUp = shouldAddPowerUp && isAnswer;
         const delay = index * SPAWN_DELAY;
-        createBubble(val, isAnswer, isPowerUp, delay);
-        });
-        }
+        createBubble(val, isAnswer, isPowerUp, delay, rounds);
+      });
 
-        // --- Input handling ---
-        function onBubbleClick(bubble, size) {
-        if (!acceptingInput || !gameActive || gamePaused) return;
+      // Preload the next question in the background
+      preloadNextQuestion();
+    }
 
-        const isCorrect = bubble.dataset.answer === '1';
-        const isPowerUp = bubble.dataset.powerUp === '1';
+    // --- Input handling ---
+    function onBubbleClick(bubble, size) {
+      if (!acceptingInput || !gameActive || gamePaused) return;
 
-        const bRect = bubble.getBoundingClientRect();
-        const sRect = stage.getBoundingClientRect();
-        const cx = bRect.left - sRect.left + bRect.width / 2;
-        const cy = bRect.top - sRect.top + bRect.height / 2;
+      const isCorrect = bubble.dataset.answer === '1';
+      const isPowerUp = bubble.dataset.powerUp === '1';
+      const questionId = parseInt(bubble.dataset.questionId);
 
-        if (isCorrect) {
+      // Only accept input for the current question's bubbles
+      if (questionId !== rounds) return;
+
+      const bRect = bubble.getBoundingClientRect();
+      const sRect = stage.getBoundingClientRect();
+      const cx = bRect.left - sRect.left + bRect.width / 2;
+      const cy = bRect.top - sRect.top + bRect.height / 2;
+
+      if (isCorrect) {
         const points = isPowerUp ? 3 : 1;
         score += points;
         correct++;
         streak++;
         rounds++;
+        
+        // Check for milestone celebrations
+        if (streak === 7 || streak === 10 || streak === 15) {
+          celebrateMilestone(streak);
+        }
         
         if (streak > bestStreak) {
             bestStreak = streak;
@@ -1028,17 +1447,12 @@
 
         setTimeout(() => bubble.remove(), 300);
         
-        // Clear remaining bubbles and generate new question
+        // Generate new question after a short delay
         setTimeout(() => {
-            stage.querySelectorAll('.bubble').forEach(b => {
-            if (b !== bubble) b.remove();
-            });
-            spawnTimeouts.forEach(timeout => clearTimeout(timeout));
-            spawnTimeouts = [];
             if (gameActive) generateQuestion();
         }, 500);
 
-        } else {
+      } else {
         // Wrong answer
         streak = 0;
         loseLife();
@@ -1049,96 +1463,99 @@
         bubble.classList.add('wrong');
         showFeedback('Wrong!', false);
         setTimeout(() => bubble.remove(), 400);
-        }
+      }
 
-        stageFlash();
-        }
+      stageFlash();
+    }
 
-        function updateScore() {
-        const acc = rounds ? Math.round((correct / rounds) * 100) : 0;
-        scoreEl.textContent = `Score: ${score} | Round: ${rounds} | Accuracy: ${acc}% | Best: ${highScore}`;
+    function updateScore() {
+      const acc = rounds ? Math.round((correct / rounds) * 100) : 0;
+      scoreEl.textContent = `Score: ${score} | Round: ${rounds} | Accuracy: ${acc}% | Best: ${highScore}`;
 
-        if (score > highScore) {
+      if (score > highScore) {
         highScore = score;
         localStorage.setItem('highScore', highScore.toString());
-        }
+      }
 
-        // Update streak indicator
-        if (streak >= STREAK_THRESHOLD) {
+      // Update streak indicator
+      if (streak >= STREAK_THRESHOLD) {
         streakEl.textContent = `🔥 Streak: ${streak} (Best: ${bestStreak})`;
         streakEl.classList.add('show');
-        } else {
+      } else {
         streakEl.classList.remove('show');
-        }
-        }
+      }
+    }
 
-        function resetGame() {
-        // Clear timeouts
-        spawnTimeouts.forEach(timeout => clearTimeout(timeout));
-        spawnTimeouts = [];
+    function resetGame() {
+      // Clear timeouts
+      spawnTimeouts.forEach(timeout => clearTimeout(timeout));
+      spawnTimeouts = [];
 
-        // Reset state
-        score = 0;
-        rounds = 0;
-        correct = 0;
-        streak = 0;
-        lives = MAX_LIVES;
-        acceptingInput = true;
-        gamePaused = false;
+      // Reset state
+      score = 0;
+      rounds = 0;
+      correct = 0;
+      streak = 0;
+      lives = MAX_LIVES;
+      acceptingInput = true;
+      gamePaused = false;
+      nextQuestionData = null;
+      questionHue = 200;
 
-        // Clear stage
-        stage.querySelectorAll('.bubble').forEach(b => b.remove());
+      // Clear stage
+      stage.querySelectorAll('.bubble').forEach(b => b.remove());
 
-        updateScore();
-        updateLives();
+      updateScore();
+      updateLives();
 
-        qEl.textContent = 'Ready?';
-        document.getElementById('pauseBtn').textContent = 'Pause';
-        }
+      qEl.textContent = 'Ready?';
+      document.getElementById('pauseBtn').textContent = 'Pause';
+    }
 
-        // --- Keyboard controls ---
-        document.addEventListener('keydown', (e) => {
-        if (!gameActive || gamePaused) return;
+    // --- Keyboard controls ---
+    document.addEventListener('keydown', (e) => {
+      if (!gameActive || gamePaused) return;
 
-        if (e.key >= '1' && e.key <= '6') {
-        const bubbles = Array.from(stage.querySelectorAll('.bubble'));
+      if (e.key >= '1' && e.key <= '6') {
+        const bubbles = Array.from(stage.querySelectorAll('.bubble'))
+          .filter(b => parseInt(b.dataset.questionId) === rounds);
         const index = parseInt(e.key) - 1;
         if (bubbles[index]) {
             bubbles[index].click();
         }
-        } else if (e.key === ' ') {
+      } else if (e.key === ' ') {
         e.preventDefault();
         // Space bar clicks the correct answer bubble
-        const correctBubble = stage.querySelector('.bubble[data-answer="1"]');
+        const correctBubble = stage.querySelector('.bubble[data-answer="1"][data-question-id="' + rounds + '"]');
         if (correctBubble) {
             correctBubble.click();
         }
-        } else if (e.key === 'p' || e.key === 'P') {
+      } else if (e.key === 'p' || e.key === 'P') {
         pauseGame();
-        } else if (e.key === 'Escape') {
+      } else if (e.key === 'Escape') {
         showMenu();
-        }
-        });
+      }
+    });
 
-        // Prevent context menu on touch devices
-        document.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        });
+    // Prevent context menu on touch devices
+    document.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
 
-        // --- Resize safety ---
-        window.addEventListener('resize', () => {
-        const sw = stage.clientWidth;
-        stage.querySelectorAll('.bubble').forEach(b => {
+    // --- Resize safety ---
+    window.addEventListener('resize', () => {
+      const sw = stage.clientWidth;
+      stage.querySelectorAll('.bubble').forEach(b => {
         const w = b.offsetWidth;
         const currentX = parseFloat(b.style.left) || 0;
         const newX = Math.min(currentX, Math.max(0, sw - w));
         b.style.left = newX + 'px';
-        });
-        });
+      });
+    });
 
-        // --- Initialize ---
-        updateMenuStats();
-        resetGame();
-</script>
+    // --- Initialize ---
+    updateMenuStats();
+    resetGame();
+  </script>
 </body>
 </html>
