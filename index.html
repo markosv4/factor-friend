@@ -284,30 +284,30 @@
 
     .stage {
     position: relative;
-    width: 300px; /* Narrow width */
+    width: 400px;
     height: 100vh;
     overflow: hidden;
-    margin: 0 auto; /* Center the play area */
+    margin: 0 auto;
     border-left: 2px solid rgba(255, 255, 255, 0.3);
     border-right: 2px solid rgba(255, 255, 255, 0.3);
     }
 
     .bubble {
-      position: absolute;
-      left: 0; top: 0;
-      width: 80px; height: 80px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(173,216,230,0.7) 60%, rgba(135,206,235,0.4) 100%);
-      box-shadow:
-        inset -6px -6px 12px rgba(255,255,255,0.65),
-        inset 8px 8px 14px rgba(0,0,0,0.08),
-        0 10px 20px rgba(0,0,0,0.08);
-      cursor: pointer;
-      transition: transform 120ms ease;
-      will-change: transform, filter, opacity;
-      display: grid;
-      place-items: center;
-      padding: 6px;
+        position: absolute;
+        left: 0; top: 0;
+        width: 70px; height: 70px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(173,216,230,0.7) 60%, rgba(135,206,235,0.4) 100%);
+        box-shadow:
+            inset -6px -6px 12px rgba(255,255,255,0.65),
+            inset 8px 8px 14px rgba(0,0,0,0.08),
+            0 10px 20px rgba(0,0,0,0.08);
+        cursor: pointer;
+        transition: transform 120ms ease;
+        will-change: transform, filter, opacity;
+        display: grid;
+        place-items: center;
+        padding: 6px;
     }
     
     .bubble:hover { transform: scale(1.05); }
@@ -376,12 +376,18 @@
     position: relative;
     z-index: 1;
     font-weight: 800;
-    font-size: 20px; /* Smaller text */
+    font-size: 18px;
     letter-spacing: 0.5px;
     color: #114b5f;
     text-shadow: 0 1px 0 rgba(255,255,255,0.7);
     user-select: none;
     pointer-events: none;
+    }
+
+    .label.underlined {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
     }
 
     .bubble.power-up .label {
@@ -541,31 +547,31 @@
     }
 
     @media (max-width: 768px) {
-      .stage {
-        width: 250px; /* Even narrower on mobile */
+    .stage {
+        width: 320px;
     }
-      .bubble {
+    .bubble {
         width: 60px;
         height: 60px;
-      }
-      .label {
+    }
+    .label {
         font-size: 16px;
-      }
-      .menu-panel {
+    }
+    .menu-panel {
         padding: 30px 20px;
-      }
-      .menu-title {
+    }
+    .menu-title {
         font-size: 24px;
-      }
-      .menu-btn {
+    }
+    .menu-btn {
         font-size: 12px;
         padding: 10px 15px;
         min-width: 60px;
-      }
-      .heart {
+    }
+    .heart {
         width: 25px;
         height: 25px;
-      }
+    }
     }
   </style>
 </head>
@@ -681,7 +687,7 @@
     const randFloat = (min, max) => Math.random() * (max - min) + min;
 
     function getRandomX(bubbleSize) {
-    const stageWidth = 300; // Fixed narrow width instead of stage.clientWidth
+    const stageWidth = window.innerWidth <= 768 ? 320 : 400;
     return randInt(0, Math.max(0, stageWidth - bubbleSize));
     }
 
@@ -859,7 +865,7 @@
         }
 
         // --- Bubble creation ---
-        function createBubble(value, isAnswer, isPowerUp = false, delay = 0) {
+    function createBubble(value, isAnswer, isPowerUp = false, delay = 0) {
         if (!gameActive) return;
 
         const timeout = setTimeout(() => {
@@ -871,7 +877,7 @@
         bubble.dataset.answer = isAnswer ? '1' : '0';
         bubble.dataset.powerUp = isPowerUp ? '1' : '0';
 
-        const size = randInt(80, 120);
+        const size = randInt(60, 80);
         bubble.style.width = size + 'px';
         bubble.style.height = size + 'px';
 
@@ -883,49 +889,55 @@
         bubble.style.animationDuration = `${fallDuration}ms`;
 
         if (!isPowerUp) {
-            const hue = randInt(180, 220);
-            bubble.style.filter = `hue-rotate(${hue}deg)`;
+        const hue = randInt(180, 220);
+        bubble.style.filter = `hue-rotate(${hue}deg)`;
         }
 
         const label = document.createElement('div');
         label.className = 'label';
+        
+        // Add underline for 6s and 9s to distinguish them
+        if (value === 6 || value === 9 || String(value).includes('6') || String(value).includes('9')) {
+        label.classList.add('underlined');
+        }
+        
         label.textContent = isPowerUp ? '✨' : value;
         bubble.appendChild(label);
 
         bubble.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            onBubbleClick(bubble, size);
+        e.preventDefault();
+        onBubbleClick(bubble, size);
         });
         
         stage.appendChild(bubble);
 
         // Remove bubble when animation ends (fell off screen)
         setTimeout(() => {
-            if (bubble.parentNode && gameActive && !gamePaused) {
+        if (bubble.parentNode && gameActive && !gamePaused) {
             // Bubble fell off screen without being clicked
             if (isAnswer) {
-                // Player missed the correct answer
-                loseLife();
-                streak = 0;
-                rounds++;
-                updateScore();
-                showFeedback('Missed!', false);
-                showAnswerReveal(currentAnswer);
-                stageFlash();
-                
-                // Generate new question after missing
-                setTimeout(() => {
+            // Player missed the correct answer
+            loseLife();
+            streak = 0;
+            rounds++;
+            updateScore();
+            showFeedback('Missed!', false);
+            showAnswerReveal(currentAnswer);
+            stageFlash();
+            
+            // Generate new question after missing
+            setTimeout(() => {
                 if (gameActive) generateQuestion();
-                }, 1500);
+            }, 1500);
             }
             bubble.remove();
-            }
+        }
         }, fallDuration + 100);
         
-        }, delay);
+    }, delay);
 
-        spawnTimeouts.push(timeout);
-        }
+    spawnTimeouts.push(timeout);
+    }
 
         // --- Round generation ---
         function generateQuestion() {
