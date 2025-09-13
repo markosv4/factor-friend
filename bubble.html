@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Falling Bubble Multiplication</title>
+  <style>
+    :root {
+      --bg1: #a8edea;
+      --bg2: #fed6e3;
+      --text: #0b2a2f;
+      --correct: #4ade80;
+      --wrong: #ef4444;
+      --streak: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--text);
+      background: linear-gradient(to top, var(--bg1), var(--bg2));
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Main Menu Styles */
+    .menu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: opacity 0.3s ease;
+    }
+
+    .menu-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .menu-panel {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      transform: scale(1);
+      transition: transform 0.3s ease;
+    }
+
+    .menu-overlay.hidden .menu-panel {
+      transform: scale(0.9);
+    }
+
+    .menu-title {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: linear-gradient(45deg, var(--correct), var(--streak));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .menu-subtitle {
+      font-size: 16px;
+      opacity: 0.7;
+      margin-bottom: 30px;
+    }
+
+    .menu-section {
+      margin-bottom: 25px;
+    }
+
+    .menu-section h3 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: var(--text);
+    }
+
+    .menu-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .menu-btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      min-width: 80px;
+    }
+
+    .menu-btn:hover {
+      background: rgba(255, 255, 255, 0.9);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .menu-btn.active {
+      background: var(--correct);
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    .start-btn {
+      background: linear-gradient(45deg, var(--correct), var(--streak));
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 15px 40px;
+      border-radius: 25px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      margin-top: 20px;
+    }
+
+    .start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .stats-section {
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      text-align: center;
+    }
+
+    .stat-item {
+      font-size: 14px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--streak);
+    }
+
+    .stat-label {
+      opacity: 0.7;
+      font-size: 12px;
+    }
+
+    /* Game UI Styles */
+    .hud {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: grid;
+      grid-auto-flow: column;
+      gap: 16px;
+      align-items: center;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.65);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      z-index: 3;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .hud.visible {
+      opacity: 1;
+    }
+
+    .question {
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      font-size: clamp(18px, 3vw, 28px);
+    }
+
+    .score {
+      font-weight: 700;
+      font-size: clamp(12px, 2vw, 16px);
+      opacity: 0.85;
+    }
+
+    .game-controls {
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      display: flex;
+      gap: 8px;
+      z-index: 3;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .game-controls.visible {
+      opacity: 1;
+    }
+
+    .control-btn {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(4px);
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 12px;
+    }
+
+    .control-btn:hover {
+      background: rgba(255,255,255,0.9);
+      transform: translateY(-1px);
+    }
+
+    .streak-indicator {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      padding: 8px 12px;
+      border-radius: 20px;
+      background: linear-gradient(45deg, var(--streak), #fbbf24);
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      transform: scale(0);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 3;
+    }
+
+    .streak-indicator.show {
+      transform: scale(1);
+    }
+
+    .feedback {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 32px;
+      font-weight: 800;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .feedback.show {
+      animation: feedbackPop 0.6s ease-out;
+    }
+
+    @keyframes feedbackPop {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    .stage {
+    position: relative;
+    width: 300px; /* Narrow width */
+    height: 100vh;
+    overflow: hidden;
+    margin: 0 auto; /* Center the play area */
+    border-left: 2px solid rgba(255, 255, 255, 0.3);
+    border-right: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .bubble {
+      position: absolute;
+      left: 0; top: 0;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(173,216,230,0.7) 60%, rgba(135,206,235,0.4) 100%);
+      box-shadow:
+        inset -6px -6px 12px rgba(255,255,255,0.65),
+        inset 8px 8px 14px rgba(0,0,0,0.08),
+        0 10px 20px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: transform 120ms ease;
+      will-change: transform, filter, opacity;
+      display: grid;
+      place-items: center;
+      padding: 6px;
+    }
+    
+    .bubble:hover { transform: scale(1.05); }
+    .bubble:active { transform: scale(0.95); }
+
+    .bubble.falling {
+      animation: fall linear forwards;
+    }
+
+    @keyframes fall {
+      from { 
+        transform: translateY(-150px) rotateZ(0deg); 
+        opacity: 0;
+      }
+      5% {
+        opacity: 1;
+      }
+      95% {
+        opacity: 1;
+      }
+      to { 
+        transform: translateY(calc(100vh + 150px)) rotateZ(360deg); 
+        opacity: 0;
+      }
+    }
+
+    .bubble.power-up {
+      background: radial-gradient(circle at 30% 30%, rgba(255,215,0,0.9), rgba(255,140,0,0.7) 60%, rgba(255,69,0,0.4) 100%);
+      box-shadow:
+        inset -6px -6px 12px rgba(255,255,255,0.65),
+        inset 8px 8px 14px rgba(255,140,0,0.15),
+        0 10px 20px rgba(255,140,0,0.2),
+        0 0 30px rgba(255,215,0,0.3);
+      animation: fall linear forwards, powerGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes powerGlow {
+      0%, 100% { 
+        box-shadow: 
+          inset -6px -6px 12px rgba(255,255,255,0.65), 
+          inset 8px 8px 14px rgba(255,140,0,0.15), 
+          0 10px 20px rgba(255,140,0,0.2), 
+          0 0 30px rgba(255,215,0,0.3); 
+      }
+      50% { 
+        box-shadow: 
+          inset -6px -6px 12px rgba(255,255,255,0.65), 
+          inset 8px 8px 14px rgba(255,140,0,0.15), 
+          0 10px 20px rgba(255,140,0,0.2), 
+          0 0 50px rgba(255,215,0,0.5); 
+      }
+    }
+
+    .bubble::before {
+      content: "";
+      position: absolute;
+      left: 18%; top: 18%;
+      width: 35%; height: 35%;
+      background: radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,255,255,0) 60%);
+      border-radius: 50%;
+      filter: blur(0.5px);
+      pointer-events: none;
+    }
+
+    .label {
+    position: relative;
+    z-index: 1;
+    font-weight: 800;
+    font-size: 20px; /* Smaller text */
+    letter-spacing: 0.5px;
+    color: #114b5f;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+    user-select: none;
+    pointer-events: none;
+    }
+
+    .bubble.power-up .label {
+      color: #8b4513;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.9);
+    }
+
+    .bubble.correct {
+      animation: popAndFall 0.3s ease-out forwards;
+      filter: saturate(1.2) brightness(1.1);
+    }
+
+    @keyframes popAndFall {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.9; filter: blur(0.2px); }
+      100% { transform: scale(0.3); opacity: 0; filter: blur(0.5px); }
+    }
+
+    .bubble.wrong {
+      animation: wrongShake 0.4s ease-out forwards;
+      filter: hue-rotate(330deg) saturate(1.2) brightness(1.05);
+      box-shadow:
+        inset -4px -6px 10px rgba(255,255,255,0.5),
+        inset 8px 10px 16px rgba(255,0,0,0.15),
+        0 10px 22px rgba(255,0,0,0.10);
+    }
+
+    @keyframes wrongShake {
+      0%, 100% { transform: translateX(0); opacity: 1; }
+      20% { transform: translateX(-5px); }
+      40% { transform: translateX(5px); }
+      60% { transform: translateX(-3px); }
+      80% { transform: translateX(3px); opacity: 0.7; }
+      100% { transform: translateX(0); opacity: 0; }
+    }
+
+    .ring {
+      position: absolute;
+      width: 14px; height: 14px;
+      margin-left: -7px; margin-top: -7px;
+      border: 3px solid rgba(255,255,255,0.9);
+      border-radius: 999px;
+      pointer-events: none;
+      animation: ripple 300ms ease-out forwards;
+      box-shadow: 0 0 10px rgba(255,255,255,0.6);
+      z-index: 2;
+    }
+    @keyframes ripple {
+      from { transform: scale(0.25); opacity: 0.9; border-width: 3px; }
+      to   { transform: scale(5);    opacity: 0;   border-width: 1px; }
+    }
+
+    .particle {
+      position: absolute;
+      width: 8px; height: 8px;
+      margin-left: -4px; margin-top: -4px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(135,206,235,0.9));
+      pointer-events: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      animation: shoot 380ms cubic-bezier(.15,.6,.2,1) forwards;
+      z-index: 2;
+    }
+    @keyframes shoot {
+      from { transform: translate3d(0,0,0) scale(1); opacity: 1; }
+      to   { transform: translate3d(var(--dx, 0px), var(--dy, 0px), 0) scale(0.5); opacity: 0; }
+    }
+
+    .particle.streak {
+      background: radial-gradient(circle at 30% 30%, rgba(255,215,0,0.95), rgba(255,140,0,0.9));
+    }
+
+    .flash {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.45), rgba(255,255,255,0) 60%);
+      pointer-events: none;
+      animation: flash 220ms ease-out forwards;
+      z-index: 1;
+    }
+    @keyframes flash {
+      from { opacity: 0.45; }
+      to   { opacity: 0; }
+    }
+
+    .answer-reveal {
+      position: absolute;
+      color: var(--wrong);
+      font-weight: 800;
+      font-size: 24px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      pointer-events: none;
+      animation: revealAnswer 1.5s ease-out forwards;
+      z-index: 3;
+    }
+
+    @keyframes revealAnswer {
+      0% { opacity: 0; transform: translateY(0) scale(0.8); }
+      30% { opacity: 1; transform: translateY(-20px) scale(1); }
+      100% { opacity: 0; transform: translateY(-40px) scale(0.9); }
+    }
+
+    .lives-indicator {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 3;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .lives-indicator.visible {
+      opacity: 1;
+    }
+
+    .heart {
+      width: 30px;
+      height: 30px;
+      background: var(--wrong);
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      transform: rotate(-45deg);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .heart.lost {
+      background: #ccc;
+      transform: rotate(-45deg) scale(0.7);
+      opacity: 0.5;
+    }
+
+    .heart::before,
+    .heart::after {
+      content: '';
+      width: 26px;
+      height: 40px;
+      position: absolute;
+      left: 15px;
+      top: -20px;
+      background: var(--wrong);
+      border-radius: 25px 25px 0 0;
+      transform: rotate(-45deg);
+      transform-origin: 0 100%;
+    }
+
+    .heart.lost::before,
+    .heart.lost::after {
+      background: #ccc;
+    }
+
+    .heart::after {
+      left: 0;
+      transform: rotate(45deg);
+      transform-origin: 100% 100%;
+    }
+
+    @media (max-width: 768px) {
+      .stage {
+        width: 250px; /* Even narrower on mobile */
+    }
+      .bubble {
+        width: 60px;
+        height: 60px;
+      }
+      .label {
+        font-size: 16px;
+      }
+      .menu-panel {
+        padding: 30px 20px;
+      }
+      .menu-title {
+        font-size: 24px;
+      }
+      .menu-btn {
+        font-size: 12px;
+        padding: 10px 15px;
+        min-width: 60px;
+      }
+      .heart {
+        width: 25px;
+        height: 25px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Main Menu -->
+  <div class="menu-overlay" id="menuOverlay">
+    <div class="menu-panel">
+      <h1 class="menu-title">Bubble Math</h1>
+      <p class="menu-subtitle">Catch the correct answers before they fall!</p>
+      
+      <div class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="bestScoreStat">0</div>
+            <div class="stat-label">Best Score</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="bestStreakStat">0</div>
+            <div class="stat-label">Best Streak</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-section">
+        <h3>Difficulty</h3>
+        <div class="menu-buttons">
+          <button class="menu-btn active" onclick="setMenuDifficulty('easy')" id="menuEasyBtn">Easy (2-5)</button>
+          <button class="menu-btn" onclick="setMenuDifficulty('medium')" id="menuMediumBtn">Medium (2-8)</button>
+          <button class="menu-btn" onclick="setMenuDifficulty('hard')" id="menuHardBtn">Hard (2-12)</button>
+        </div>
+      </div>
+
+      <div class="menu-section">
+        <h3>Speed</h3>
+        <div class="menu-buttons">
+          <button class="menu-btn" onclick="setMenuSpeed('slow')" id="menuSlowBtn">Slow</button>
+          <button class="menu-btn active" onclick="setMenuSpeed('normal')" id="menuNormalBtn">Normal</button>
+          <button class="menu-btn" onclick="setMenuSpeed('fast')" id="menuFastBtn">Fast</button>
+          <button class="menu-btn" onclick="setMenuSpeed('crazy')" id="menuCrazyBtn">Crazy</button>
+        </div>
+      </div>
+
+      <button class="start-btn" onclick="startGame()">🚀 Start Game</button>
+    </div>
+  </div>
+
+  <!-- Game UI -->
+  <div class="hud" id="hud">
+    <div class="question" id="question">Ready?</div>
+    <div class="score" id="score">Score: 0 | Round: 0 | Accuracy: 0%</div>
+  </div>
+
+  <div class="game-controls" id="gameControls">
+    <button class="control-btn" onclick="pauseGame()" id="pauseBtn">Pause</button>
+    <button class="control-btn" onclick="showMenu()">Menu</button>
+  </div>
+
+  <div class="streak-indicator" id="streakIndicator">🔥 Streak: 0</div>
+  <div class="feedback" id="feedback"></div>
+  <div class="lives-indicator" id="livesIndicator"></div>
+
+  <div class="stage" id="stage"></div>
+
+  <script>
+    // --- Game settings ---
+    const difficulties = {
+      easy: { min: 2, max: 5, name: 'Easy' },
+      medium: { min: 2, max: 8, name: 'Medium' },
+      hard: { min: 2, max: 12, name: 'Hard' }
+    };
+
+    const speeds = {
+      slow: { duration: 8000, name: 'Slow' },
+      normal: { duration: 6000, name: 'Normal' },
+      fast: { duration: 4000, name: 'Fast' },
+      crazy: { duration: 2500, name: 'Crazy' }
+    };
+
+    const NUM_CHOICES = 6;
+    const SPAWN_DELAY = 800;
+    const STREAK_THRESHOLD = 3;
+    const MAX_LIVES = 3;
+
+    // --- DOM Elements ---
+    const stage = document.getElementById('stage');
+    const qEl = document.getElementById('question');
+    const scoreEl = document.getElementById('score');
+    const streakEl = document.getElementById('streakIndicator');
+    const feedbackEl = document.getElementById('feedback');
+    const livesEl = document.getElementById('livesIndicator');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const hud = document.getElementById('hud');
+    const gameControls = document.getElementById('gameControls');
+
+    // --- State ---
+    let score = 0;
+    let rounds = 0;
+    let correct = 0;
+    let streak = 0;
+    let lives = MAX_LIVES;
+    let bestStreak = parseInt(localStorage.getItem('bestStreak') || '0');
+    let highScore = parseInt(localStorage.getItem('highScore') || '0');
+    let acceptingInput = true;
+    let currentAnswer = null;
+    let currentDifficulty = 'easy';
+    let currentSpeed = 'normal';
+    let gameActive = false;
+    let gamePaused = false;
+    let spawnTimeouts = [];
+
+    // --- Utils ---
+    const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const randFloat = (min, max) => Math.random() * (max - min) + min;
+
+    function getRandomX(bubbleSize) {
+    const stageWidth = 300; // Fixed narrow width instead of stage.clientWidth
+    return randInt(0, Math.max(0, stageWidth - bubbleSize));
+    }
+
+    // --- Menu Functions ---
+    function updateMenuStats() {
+      document.getElementById('bestScoreStat').textContent = highScore;
+      document.getElementById('bestStreakStat').textContent = bestStreak;
+    }
+
+    function setMenuDifficulty(level) {
+      currentDifficulty = level;
+      document.querySelectorAll('.menu-section .menu-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('menu' + level.charAt(0).toUpperCase() + level.slice(1) + 'Btn').classList.add('active');
+    }
+
+    function setMenuSpeed(speed) {
+      currentSpeed = speed;
+      document.querySelectorAll('.menu-section .menu-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('menu' + speed.charAt(0).toUpperCase() + speed.slice(1) + 'Btn').classList.add('active');
+    }
+
+    function showMenu() {
+      gameActive = false;
+      gamePaused = true;
+      
+      // Clear timeouts
+      spawnTimeouts.forEach(timeout => clearTimeout(timeout));
+      spawnTimeouts = [];
+      
+      // Hide game UI
+      hud.classList.remove('visible');
+      gameControls.classList.remove('visible');
+      livesEl.classList.remove('visible');
+      
+      // Show menu
+      menuOverlay.classList.remove('hidden');
+      updateMenuStats();
+    }
+
+    function startGame() {
+      // Hide menu
+      menuOverlay.classList.add('hidden');
+      
+      // Show game UI
+      setTimeout(() => {
+        hud.classList.add('visible');
+        gameControls.classList.add('visible');
+        livesEl.classList.add('visible');
+      }, 300);
+      
+      // Reset game state
+      resetGame();
+      
+      // Start the game
+      gameActive = true;
+      gamePaused = false;
+      generateQuestion();
+    }
+
+    function pauseGame() {
+      if (!gameActive) return;
+      
+      gamePaused = !gamePaused;
+      const pauseBtn = document.getElementById('pauseBtn');
+      
+      if (gamePaused) {
+        pauseBtn.textContent = 'Resume';
+        // Pause all bubble animations
+        stage.querySelectorAll('.bubble').forEach(bubble => {
+          bubble.style.animationPlayState = 'paused';
+        });
+      } else {
+        pauseBtn.textContent = 'Pause';
+        // Resume all bubble animations
+        stage.querySelectorAll('.bubble').forEach(bubble => {
+          bubble.style.animationPlayState = 'running';
+        });
+      }
+    }
+
+    // --- Effects ---
+    function makeRipple(x, y) {
+      const ring = document.createElement('div');
+      ring.className = 'ring';
+      ring.style.left = x + 'px';
+      ring.style.top = y + 'px';
+      stage.appendChild(ring);
+      setTimeout(() => ring.remove(), 320);
+    }
+
+    function makeParticles(x, y, baseSize, isStreak = false) {
+      const count = randInt(8, 12);
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = isStreak ? 'particle streak' : 'particle';
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+
+        const angle = randFloat(0, Math.PI * 2);
+        const dist = randFloat(baseSize * 0.3, baseSize * 0.8);
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+        p.style.setProperty('--dx', dx.toFixed(1) + 'px');
+        p.style.setProperty('--dy', dy.toFixed(1) + 'px');
+
+        if (!isStreak) {
+          const hue = randInt(180, 220);
+          const sat = randInt(60, 85);
+          p.style.background = `radial-gradient(circle at 30% 30%, hsla(${hue},100%,98%,0.95), hsla(${hue}, ${sat}%, 70%, 0.9))`;
+        }
+
+        stage.appendChild(p);
+        setTimeout(() => p.remove(), 420);
+      }
+    }
+
+    function stageFlash() {
+      const f = document.createElement('div');
+      f.className = 'flash';
+      stage.appendChild(f);
+      setTimeout(() => f.remove(), 240);
+    }
+
+    function showFeedback(text, isCorrect) {
+      feedbackEl.textContent = text;
+      feedbackEl.style.color = isCorrect ? 'var(--correct)' : 'var(--wrong)';
+      feedbackEl.classList.add('show');
+      setTimeout(() => feedbackEl.classList.remove('show'), 600);
+    }
+
+    function showAnswerReveal(answer) {
+      const reveal = document.createElement('div');
+      reveal.className = 'answer-reveal';
+      reveal.textContent = `Answer: ${answer}`;
+      reveal.style.left = '50%';
+      reveal.style.top = '40%';
+      reveal.style.transform = 'translateX(-50%)';
+      stage.appendChild(reveal);
+      setTimeout(() => reveal.remove(), 1500);
+    }
+
+    // --- Lives system ---
+    function updateLives() {
+      livesEl.innerHTML = '';
+      for (let i = 0; i < MAX_LIVES; i++) {
+        const heart = document.createElement('div');
+        heart.className = i >= lives ? 'heart lost' : 'heart';
+        livesEl.appendChild(heart);
+      }
+    }
+
+    function loseLife() {
+      lives--;
+      updateLives();
+        if (lives <= 0) {
+            gameOver();
+        }
+    }
+
+        function gameOver() {
+        gameActive = false;
+        acceptingInput = false;
+
+        // Clear all timeouts and bubbles
+        spawnTimeouts.forEach(timeout => clearTimeout(timeout));
+        spawnTimeouts = [];
+        stage.querySelectorAll('.bubble').forEach(bubble => bubble.remove());
+
+        showFeedback(`Game Over! Final Score: ${score}`, false);
+
+        // Show menu after a delay
+        setTimeout(() => {
+        showMenu();
+        }, 2000);
+        }
+
+        // --- Bubble creation ---
+        function createBubble(value, isAnswer, isPowerUp = false, delay = 0) {
+        if (!gameActive) return;
+
+        const timeout = setTimeout(() => {
+        if (!gameActive || gamePaused) return;
+        
+        const bubble = document.createElement('div');
+        bubble.className = isPowerUp ? 'bubble power-up falling' : 'bubble falling';
+        bubble.dataset.value = String(value);
+        bubble.dataset.answer = isAnswer ? '1' : '0';
+        bubble.dataset.powerUp = isPowerUp ? '1' : '0';
+
+        const size = randInt(80, 120);
+        bubble.style.width = size + 'px';
+        bubble.style.height = size + 'px';
+
+        const x = getRandomX(size);
+        bubble.style.left = x + 'px';
+        bubble.style.top = '-150px';
+
+        const fallDuration = speeds[currentSpeed].duration;
+        bubble.style.animationDuration = `${fallDuration}ms`;
+
+        if (!isPowerUp) {
+            const hue = randInt(180, 220);
+            bubble.style.filter = `hue-rotate(${hue}deg)`;
+        }
+
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = isPowerUp ? '✨' : value;
+        bubble.appendChild(label);
+
+        bubble.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            onBubbleClick(bubble, size);
+        });
+        
+        stage.appendChild(bubble);
+
+        // Remove bubble when animation ends (fell off screen)
+        setTimeout(() => {
+            if (bubble.parentNode && gameActive && !gamePaused) {
+            // Bubble fell off screen without being clicked
+            if (isAnswer) {
+                // Player missed the correct answer
+                loseLife();
+                streak = 0;
+                rounds++;
+                updateScore();
+                showFeedback('Missed!', false);
+                showAnswerReveal(currentAnswer);
+                stageFlash();
+                
+                // Generate new question after missing
+                setTimeout(() => {
+                if (gameActive) generateQuestion();
+                }, 1500);
+            }
+            bubble.remove();
+            }
+        }, fallDuration + 100);
+        
+        }, delay);
+
+        spawnTimeouts.push(timeout);
+        }
+
+        // --- Round generation ---
+        function generateQuestion() {
+        if (!gameActive || gamePaused) return;
+
+        // Clear any existing timeouts
+        spawnTimeouts.forEach(timeout => clearTimeout(timeout));
+        spawnTimeouts = [];
+
+        const diff = difficulties[currentDifficulty];
+        const a = randInt(diff.min, diff.max);
+        const b = randInt(diff.min, diff.max);
+        const product = a * b;
+        currentAnswer = product;
+
+        qEl.textContent = `${a} × ${b} = ?`;
+
+        const set = new Set([product]);
+
+        // Generate plausible wrong answers
+        const neighbours = [
+        a * (b - 1), a * (b + 1),
+        (a - 1) * b, (a + 1) * b,
+        product - a, product + a,
+        product - b, product + b,
+        ].filter(n => Number.isFinite(n) && n > 0);
+
+        for (const n of neighbours) if (set.size < NUM_CHOICES) set.add(n);
+
+        while (set.size < NUM_CHOICES) {
+        const x = randInt(diff.min, diff.max);
+        const y = randInt(diff.min, diff.max);
+        if (x * y !== product) set.add(x * y);
+        }
+
+        const choices = Array.from(set).sort(() => Math.random() - 0.5);
+
+        // Sometimes add a power-up bubble (15% chance when streak >= 3)
+        const shouldAddPowerUp = streak >= 3 && Math.random() < 0.15;
+
+        // Spawn bubbles with delays
+        choices.forEach((val, index) => {
+        const isAnswer = val === product;
+        const isPowerUp = shouldAddPowerUp && isAnswer;
+        const delay = index * SPAWN_DELAY;
+        createBubble(val, isAnswer, isPowerUp, delay);
+        });
+        }
+
+        // --- Input handling ---
+        function onBubbleClick(bubble, size) {
+        if (!acceptingInput || !gameActive || gamePaused) return;
+
+        const isCorrect = bubble.dataset.answer === '1';
+        const isPowerUp = bubble.dataset.powerUp === '1';
+
+        const bRect = bubble.getBoundingClientRect();
+        const sRect = stage.getBoundingClientRect();
+        const cx = bRect.left - sRect.left + bRect.width / 2;
+        const cy = bRect.top - sRect.top + bRect.height / 2;
+
+        if (isCorrect) {
+        const points = isPowerUp ? 3 : 1;
+        score += points;
+        correct++;
+        streak++;
+        rounds++;
+        
+        if (streak > bestStreak) {
+            bestStreak = streak;
+            localStorage.setItem('bestStreak', bestStreak.toString());
+        }
+        
+        updateScore();
+
+        makeRipple(cx, cy);
+        makeParticles(cx, cy, bRect.width, streak >= STREAK_THRESHOLD);
+        bubble.classList.remove('falling');
+        bubble.classList.add('correct');
+
+        if (isPowerUp) {
+            showFeedback(`Power Up! +${points} points!`, true);
+        } else if (streak >= STREAK_THRESHOLD) {
+            showFeedback(`${streak} streak!`, true);
+        } else {
+            showFeedback('Correct!', true);
+        }
+
+        setTimeout(() => bubble.remove(), 300);
+        
+        // Clear remaining bubbles and generate new question
+        setTimeout(() => {
+            stage.querySelectorAll('.bubble').forEach(b => {
+            if (b !== bubble) b.remove();
+            });
+            spawnTimeouts.forEach(timeout => clearTimeout(timeout));
+            spawnTimeouts = [];
+            if (gameActive) generateQuestion();
+        }, 500);
+
+        } else {
+        // Wrong answer
+        streak = 0;
+        loseLife();
+        rounds++;
+        updateScore();
+
+        bubble.classList.remove('falling');
+        bubble.classList.add('wrong');
+        showFeedback('Wrong!', false);
+        setTimeout(() => bubble.remove(), 400);
+        }
+
+        stageFlash();
+        }
+
+        function updateScore() {
+        const acc = rounds ? Math.round((correct / rounds) * 100) : 0;
+        scoreEl.textContent = `Score: ${score} | Round: ${rounds} | Accuracy: ${acc}% | Best: ${highScore}`;
+
+        if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore.toString());
+        }
+
+        // Update streak indicator
+        if (streak >= STREAK_THRESHOLD) {
+        streakEl.textContent = `🔥 Streak: ${streak} (Best: ${bestStreak})`;
+        streakEl.classList.add('show');
+        } else {
+        streakEl.classList.remove('show');
+        }
+        }
+
+        function resetGame() {
+        // Clear timeouts
+        spawnTimeouts.forEach(timeout => clearTimeout(timeout));
+        spawnTimeouts = [];
+
+        // Reset state
+        score = 0;
+        rounds = 0;
+        correct = 0;
+        streak = 0;
+        lives = MAX_LIVES;
+        acceptingInput = true;
+        gamePaused = false;
+
+        // Clear stage
+        stage.querySelectorAll('.bubble').forEach(b => b.remove());
+
+        updateScore();
+        updateLives();
+
+        qEl.textContent = 'Ready?';
+        document.getElementById('pauseBtn').textContent = 'Pause';
+        }
+
+        // --- Keyboard controls ---
+        document.addEventListener('keydown', (e) => {
+        if (!gameActive || gamePaused) return;
+
+        if (e.key >= '1' && e.key <= '6') {
+        const bubbles = Array.from(stage.querySelectorAll('.bubble'));
+        const index = parseInt(e.key) - 1;
+        if (bubbles[index]) {
+            bubbles[index].click();
+        }
+        } else if (e.key === ' ') {
+        e.preventDefault();
+        // Space bar clicks the correct answer bubble
+        const correctBubble = stage.querySelector('.bubble[data-answer="1"]');
+        if (correctBubble) {
+            correctBubble.click();
+        }
+        } else if (e.key === 'p' || e.key === 'P') {
+        pauseGame();
+        } else if (e.key === 'Escape') {
+        showMenu();
+        }
+        });
+
+        // Prevent context menu on touch devices
+        document.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        });
+
+        // --- Resize safety ---
+        window.addEventListener('resize', () => {
+        const sw = stage.clientWidth;
+        stage.querySelectorAll('.bubble').forEach(b => {
+        const w = b.offsetWidth;
+        const currentX = parseFloat(b.style.left) || 0;
+        const newX = Math.min(currentX, Math.max(0, sw - w));
+        b.style.left = newX + 'px';
+        });
+        });
+
+        // --- Initialize ---
+        updateMenuStats();
+        resetGame();
+</script>
+</body>
+</html>
