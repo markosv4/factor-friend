@@ -337,26 +337,26 @@
     .bubble:hover { transform: scale(1.05); }
     .bubble:active { transform: scale(0.95); }
 
-    .bubble.falling {
-      animation: fall linear forwards;
-    }
+.bubble.falling {
+  animation: fall linear forwards;
+  animation-duration: var(--fallMs, 6000ms);
+}
 
     @keyframes fall {
-      from { 
-        transform: translateY(-150px) rotateZ(0deg); 
-        opacity: 0;
-      }
-      5% {
-        opacity: 1;
-      }
-      95% {
-        opacity: 1;
-      }
-      to { 
-        transform: translateY(calc(100vh + 150px)) rotateZ(360deg); 
-        opacity: 0;
-      }
+      /* Distance is compressed between 44%–62% to create a mid-screen slow-down */
+      0%   { transform: translateY(-150px) rotateZ(0deg) translateX(0); opacity: 0; }
+      6%   { opacity: 1; }
+      28%  { transform: translateY(27vh)  rotateZ(100deg) translateX(6px); }
+      44%  { transform: translateY(43vh)  rotateZ(160deg) translateX(0); }
+
+      /* Think zone: tiny vertical movement over ~18% of the timeline */
+      52%  { transform: translateY(50vh)  rotateZ(200deg) translateX(-2px); }
+      62%  { transform: translateY(56vh)  rotateZ(240deg) translateX(0); }
+
+      78%  { transform: translateY(76vh)  rotateZ(300deg) translateX(-6px); }
+      100% { transform: translateY(calc(100vh + 150px)) rotateZ(360deg) translateX(0); opacity: 0; }
     }
+
 
     .bubble.power-up {
       background: radial-gradient(circle at 30% 30%, rgba(255,215,0,0.9), rgba(255,140,0,0.7) 60%, rgba(255,69,0,0.4) 100%);
@@ -366,6 +366,7 @@
         0 10px 20px rgba(255,140,0,0.2),
         0 0 30px rgba(255,215,0,0.3);
       animation: fall linear forwards, powerGlow 2s ease-in-out infinite;
+      animation-duration: var(--fallMs, 6000ms), 2000ms;
     }
 
     @keyframes powerGlow {
@@ -863,11 +864,12 @@
   -webkit-text-fill-color: transparent;
 }
 .bubble.expired {
-  opacity: 0.1;              
-  filter: grayscale(1) blur(1px);
+  opacity: 0.3;              /* was 0.1 */
+  filter: grayscale(.6) blur(.6px);
   pointer-events: none;
-  transition: all 0.4s ease;  
+  transition: opacity .4s, filter .4s;
 }
+
 /* CSS */
 .click-wave {
   position: absolute;
@@ -917,12 +919,20 @@
   transition: width .25s;
 }
 @keyframes fall {
-  from { transform: translateY(-150px) rotateZ(0deg) translateX(0); }
-  25%  { transform: translateY(25vh)   rotateZ(90deg)  translateX(5px); }
-  50%  { transform: translateY(50vh)   rotateZ(180deg) translateX(0); }
-  75%  { transform: translateY(75vh)   rotateZ(270deg) translateX(-5px); }
-  to   { transform: translateY(calc(100vh + 150px)) rotateZ(360deg) translateX(0); }
+  /* Distance is compressed between 44%–62% to create a mid-screen slow-down */
+  0%   { transform: translateY(-150px) rotateZ(0deg) translateX(0); opacity: 0; }
+  6%   { opacity: 1; }
+  28%  { transform: translateY(27vh)  rotateZ(100deg) translateX(6px); }
+  44%  { transform: translateY(43vh)  rotateZ(160deg) translateX(0); }
+
+  /* Think zone: tiny vertical movement over ~18% of the timeline */
+  52%  { transform: translateY(50vh)  rotateZ(200deg) translateX(-2px); }
+  62%  { transform: translateY(56vh)  rotateZ(240deg) translateX(0); }
+
+  78%  { transform: translateY(76vh)  rotateZ(300deg) translateX(-6px); }
+  100% { transform: translateY(calc(100vh + 150px)) rotateZ(360deg) translateX(0); opacity: 0; }
 }
+
 .recap-card {
   position: fixed;
   inset: 0;
@@ -957,6 +967,52 @@ body {
   background: linear-gradient(to top, hsl(var(--hue), 60%, 85%), hsl(calc(var(--hue) + 30), 70%, 92%));
   transition: background 1s;
 }
+@media (max-width: 420px) {
+  .bubble.falling { animation-duration: calc(var(--mobscale, 1.05) * 1s) !important; }
+}
+
+/* Special bubbles – brighter + aura */
+.bubble.special {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.95), rgba(255,255,255,.8) 50%, rgba(255,255,255,.15) 100%);
+  box-shadow:
+    inset -6px -6px 12px rgba(255,255,255,0.7),
+    inset 8px 8px 14px rgba(0,0,0,0.05),
+    0 0 20px var(--special-glow, rgba(255,255,255,.4)),
+    0 0 36px var(--special-glow, rgba(255,255,255,.25));
+  animation: fall linear forwards, auraPulse 1.4s ease-in-out infinite;
+  animation-duration: var(--fallMs, 6000ms), 1400ms;
+}
+
+.bubble.special .label { color:#0b2a2f; text-shadow: 0 1px 0 rgba(255,255,255,.9); }
+
+.bubble .aura {
+  position: absolute; inset: -10px;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 2px solid rgba(255,255,255,.9);
+  box-shadow: 0 0 24px var(--special-glow), inset 0 0 18px var(--special-glow);
+  animation: auraPulse 1.4s ease-in-out infinite;
+}
+@keyframes auraPulse { 0%,100% {opacity:.9; transform:scale(1)} 50% {opacity:.55; transform:scale(1.08)} }
+
+/* Per-type glow colours */
+.special-skip  { --special-glow: rgba(99,102,241,.55); }   /* indigo */
+.special-prune { --special-glow: rgba(236,72,153,.55); }   /* pink */
+.special-slow  { --special-glow: rgba(34,197,94,.55); }    /* green */
+
+/* Optional: slight screen tint during Time Freeze */
+body.bullet-time::after{
+  content:"";
+  position: fixed; inset: 0;
+  background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.25), rgba(255,255,255,0));
+  pointer-events: none;
+  animation: btFade 2.2s ease-out forwards;
+}
+@keyframes btFade { from{opacity:1} to{opacity:0} }
+
+
   </style>
 </head>
 <body>
@@ -1040,742 +1096,827 @@ body {
     </div>
   </div>
 
-  <script>
-    // --- Game settings ---
-    const difficulties = {
-      easy: { min: 2, max: 5, name: 'Easy' },
-      medium: { min: 2, max: 8, name: 'Medium' },
-      hard: { min: 2, max: 12, name: 'Hard' }
-    };
+<script>
+// --- Game settings ---
+const difficulties = {
+  easy: { min: 2, max: 5, name: 'Easy' },
+  medium: { min: 2, max: 8, name: 'Medium' },
+  hard: { min: 2, max: 12, name: 'Hard' }
+};
 
-    const speeds = {
-      slow: { duration: 8000, name: 'Slow' },
-      normal: { duration: 6000, name: 'Normal' },
-      fast: { duration: 4000, name: 'Fast' },
-      crazy: { duration: 2500, name: 'Crazy' }
-    };
+const speeds = {
+  slow:   { duration: 12000, name: 'Slow' },
+  normal: { duration: 9000,  name: 'Normal' },
+  fast:   { duration: 6500,  name: 'Fast'  },
+  crazy:  { duration: 4200,  name: 'Crazy' }
+};
 
-    // Dynamic choices by viewport (fewer on narrow screens)
-    function getChoicesCount() {
-      if (window.matchMedia('(max-width: 360px)').matches) return 4;
-      if (window.matchMedia('(max-width: 420px)').matches) return 5;
-      return 6;
-    }
-    const SPAWN_DELAY = 800;
-    const STREAK_THRESHOLD = 3;
-    const MAX_LIVES = 3;
+// Dynamic choices by viewport (fewer on narrow screens)
+function getChoicesCount() {
+  if (window.matchMedia('(max-width: 360px)').matches) return 4;
+  if (window.matchMedia('(max-width: 420px)').matches) return 5;
+  return 6;
+}
+const SPAWN_DELAY = 800;
+const STREAK_THRESHOLD = 3;
+const MAX_LIVES = 3;
 
-    // --- DOM Elements ---
-    const stage = document.getElementById('stage');
-    const qEl = document.getElementById('question');
-    const scorePrimaryEl = document.getElementById('scorePrimary');
-    const scoreSubEl = document.getElementById('scoreSub');
-    const streakEl = document.getElementById('streakIndicator');
-    const feedbackEl = document.getElementById('feedback');
-    const livesEl = document.getElementById('livesIndicator');
-    const menuOverlay = document.getElementById('menuOverlay');
-    const hud = document.getElementById('hud');
-    const gameControls = document.getElementById('gameControls');
+// Specials (same behavior as your current implementation)
+const SPECIAL_CHANCE = 0.25;  
+const PRUNE_COUNT    = 2;     // pop 2 wrong choices
+const FREEZE_MS      = 2200;  // time freeze length
 
-    // --- State ---
-    let score = 0;
-    let rounds = 0;
-    let correct = 0;
-    let streak = 0;
-    let lives = MAX_LIVES;
-    let bestStreak = parseInt(localStorage.getItem('bestStreak') || '0');
-    let highScore = parseInt(localStorage.getItem('highScore') || '0');
-    let acceptingInput = true;
-    let currentAnswer = null;
-    let currentDifficulty = localStorage.getItem('difficulty') || 'easy';
-    let currentSpeed = localStorage.getItem('speed') || 'normal';
-    let gameActive = false;
-    let gamePaused = false;
-    let spawnTimeouts = [];
-    let nextQuestionData = null;
-    let questionHue = 200;
+// --- DOM Elements ---
+const stage = document.getElementById('stage');
+const qEl = document.getElementById('question');
+const scorePrimaryEl = document.getElementById('scorePrimary');
+const scoreSubEl = document.getElementById('scoreSub');
+const streakEl = document.getElementById('streakIndicator');
+const feedbackEl = document.getElementById('feedback');
+const livesEl = document.getElementById('livesIndicator');
+const menuOverlay = document.getElementById('menuOverlay');
+const hud = document.getElementById('hud');
+const gameControls = document.getElementById('gameControls');
 
-    // --- Utils ---
-    const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-    const randFloat = (min, max) => Math.random() * (max - min) + min;
+// --- State ---
+let score = 0;
+let rounds = 0;
+let correct = 0;
+let streak = 0;
+let lives = MAX_LIVES;
+let bestStreak = parseInt(localStorage.getItem('bestStreak') || '0');
+let highScore = parseInt(localStorage.getItem('highScore') || '0');
+let acceptingInput = true;
+let currentAnswer = null;
+let currentDifficulty = localStorage.getItem('difficulty') || 'easy';
+let currentSpeed = localStorage.getItem('speed') || 'normal';
+let gameActive = false;
+let gamePaused = false;
+let spawnTimeouts = [];
+let nextQuestionData = null;
+let questionHue = 200;
 
-    function getRandomX(bubbleSize) {
-    const stageWidth = window.innerWidth <= 768 ? 320 : 400;
-    return randInt(0, Math.max(0, stageWidth - bubbleSize));
-    }
+// --- Utils ---
+const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const randFloat = (min, max) => Math.random() * (max - min) + min;
 
-    // --- Menu Functions ---
-    function updateMenuStats() {
-      document.getElementById('bestScoreStat').textContent = highScore;
-      document.getElementById('bestStreakStat').textContent = bestStreak;
-    }
-
-    function setMenuDifficulty(level) {
-      currentDifficulty = level;
-      ['menuEasyBtn','menuMediumBtn','menuHardBtn'].forEach(id => {
-        const el = document.getElementById(id); if (el) el.classList.remove('active');
-      });
-      const btnId = 'menu' + level.charAt(0).toUpperCase() + level.slice(1) + 'Btn';
-      const el = document.getElementById(btnId); if (el) el.classList.add('active');
-      localStorage.setItem('difficulty', currentDifficulty);
-    }
-
-    function setMenuSpeed(speed) {
-      currentSpeed = speed;
-      ['menuSlowBtn','menuNormalBtn','menuFastBtn','menuCrazyBtn'].forEach(id => {
-        const el = document.getElementById(id); if (el) el.classList.remove('active');
-      });
-      const btnId = 'menu' + speed.charAt(0).toUpperCase() + speed.slice(1) + 'Btn';
-      const el = document.getElementById(btnId); if (el) el.classList.add('active');
-      localStorage.setItem('speed', currentSpeed);
-    }
-
-    function initPreferences() {
-      setMenuDifficulty(currentDifficulty);
-      setMenuSpeed(currentSpeed);
-      const keysMax = document.getElementById('helpKeysMax');
-      if (keysMax) keysMax.textContent = String(getChoicesCount());
-    }
-
-    function showMenu() {
-      gameActive = false;
-      gamePaused = true;
-      const card = document.querySelector('.recap-card');
-        if (card) card.remove();
-      
-      // Clear timeouts
-      spawnTimeouts.forEach(timeout => clearTimeout(timeout));
-      spawnTimeouts = [];
-      
-      // Hide game UI
-      hud.classList.remove('visible');
-      gameControls.classList.remove('visible');
-      livesEl.classList.remove('visible');
-      
-      // Show menu
-      menuOverlay.classList.remove('hidden');
-      updateMenuStats();
-    }
-
-    function startGame() {
-      // Hide menu
-      menuOverlay.classList.add('hidden');
-      
-      // Show game UI
-      setTimeout(() => {
-        hud.classList.add('visible');
-        gameControls.classList.add('visible');
-        livesEl.classList.add('visible');
-      }, 300);
-      
-      // Reset game state
-      resetGame();
-      
-      // Start the game
-      gameActive = true;
-      gamePaused = false;
-      
-      // Preload the first question
-      preloadNextQuestion();
-      generateQuestion();
-    }
-
-    function pauseGame() {
-      if (!gameActive) return;
-      
-      gamePaused = !gamePaused;
-      const pauseBtn = document.getElementById('pauseBtn');
-      
-      if (gamePaused) {
-        pauseBtn.textContent = 'Resume';
-        // Pause all bubble animations
-        stage.querySelectorAll('.bubble').forEach(bubble => {
-          bubble.style.animationPlayState = 'paused';
-        });
-      } else {
-        pauseBtn.textContent = 'Pause';
-        // Resume all bubble animations
-        stage.querySelectorAll('.bubble').forEach(bubble => {
-          bubble.style.animationPlayState = 'running';
-        });
-      }
-    }
-
-    // --- Effects ---
-    function makeRipple(x, y) {
-      const ring = document.createElement('div');
-      ring.className = 'ring';
-      ring.style.left = x + 'px';
-      ring.style.top = y + 'px';
-      stage.appendChild(ring);
-      setTimeout(() => ring.remove(), 320);
-    }
-
-    function makeParticles(x, y, baseSize, isStreak = false) {
-      if (isStreak && streak >= 3) {
-        // Epic explosion for streaks of 3+
-        makeExplosion(x, y, baseSize);
-      } else {
-        // Regular particles
-        const count = randInt(8, 12);
-        for (let i = 0; i < count; i++) {
-          const p = document.createElement('div');
-          p.className = 'particle';
-          p.style.left = x + 'px';
-          p.style.top = y + 'px';
-
-          const angle = randFloat(0, Math.PI * 2);
-          const dist = randFloat(baseSize * 0.3, baseSize * 0.8);
-          const dx = Math.cos(angle) * dist;
-          const dy = Math.sin(angle) * dist;
-          p.style.setProperty('--dx', dx.toFixed(1) + 'px');
-          p.style.setProperty('--dy', dy.toFixed(1) + 'px');
-
-          const hue = randInt(180, 220);
-          const sat = randInt(60, 85);
-          p.style.background = `radial-gradient(circle at 30% 30%, hsla(${hue},100%,98%,0.95), hsla(${hue}, ${sat}%, 70%, 0.9))`;
-
-          stage.appendChild(p);
-          setTimeout(() => p.remove(), 420);
-        }
-      }
-    }
-
-    function makeExplosion(x, y, baseSize) {
-      // Screen shake effect
-      document.body.classList.add('screen-shake');
-      setTimeout(() => document.body.classList.remove('screen-shake'), 400);
-      
-      // Shockwave
-      const shockwave = document.createElement('div');
-      shockwave.className = 'shockwave';
-      shockwave.style.left = x + 'px';
-      shockwave.style.top = y + 'px';
-      stage.appendChild(shockwave);
-      setTimeout(() => shockwave.remove(), 600);
-      
-      // Fire particles
-      const fireCount = randInt(15, 20);
-      for (let i = 0; i < fireCount; i++) {
-          const p = document.createElement('div');
-          p.className = 'explosion-particle fire';
-          p.style.left = x + 'px';
-          p.style.top = y + 'px';
-
-          const angle = randFloat(0, Math.PI * 2);
-          const dist = randFloat(baseSize * 0.8, baseSize * 1.5);
-          const dx = Math.cos(angle) * dist;
-          const dy = Math.sin(angle) * dist;
-          p.style.setProperty('--dx', dx.toFixed(1) + 'px');
-          p.style.setProperty('--dy', dy.toFixed(1) + 'px');
-
-          stage.appendChild(p);
-          setTimeout(() => p.remove(), 800);
-      }
-      
-      // Sparks
-      const sparkCount = randInt(12, 18);
-      for (let i = 0; i < sparkCount; i++) {
-          const p = document.createElement('div');
-          p.className = 'explosion-particle spark';
-          p.style.left = x + 'px';
-          p.style.top = y + 'px';
-
-          const angle = randFloat(0, Math.PI * 2);
-          const dist = randFloat(baseSize * 1.2, baseSize * 2);
-          const dx = Math.cos(angle) * dist;
-          const dy = Math.sin(angle) * dist;
-          p.style.setProperty('--dx', dx.toFixed(1) + 'px');
-          p.style.setProperty('--dy', dy.toFixed(1) + 'px');
-
-          stage.appendChild(p);
-          setTimeout(() => p.remove(), 900);
-      }
-      
-      // Smoke clouds
-      const smokeCount = randInt(6, 10);
-      for (let i = 0; i < smokeCount; i++) {
-          const p = document.createElement('div');
-          p.className = 'explosion-particle smoke';
-          p.style.left = x + 'px';
-          p.style.top = y + 'px';
-
-          const angle = randFloat(0, Math.PI * 2);
-          const dist = randFloat(baseSize * 0.4, baseSize * 1);
-          const dx = Math.cos(angle) * dist;
-          const dy = Math.sin(angle) * dist;
-          p.style.setProperty('--dx', dx.toFixed(1) + 'px');
-          p.style.setProperty('--dy', dy.toFixed(1) + 'px');
-
-          stage.appendChild(p);
-          setTimeout(() => p.remove(), 1200);
-      }
-    }
-
-    function stageFlash() {
-      const f = document.createElement('div');
-      f.className = 'flash';
-      stage.appendChild(f);
-      setTimeout(() => f.remove(), 240);
-    }
-
-    function showFeedback(text, isCorrect) {
-      feedbackEl.textContent = text;
-      feedbackEl.style.color = isCorrect ? 'var(--correct)' : 'var(--wrong)';
-      feedbackEl.classList.add('show');
-      setTimeout(() => feedbackEl.classList.remove('show'), 600);
-    }
-
-    function showAnswerReveal(answer) {
-      const reveal = document.createElement('div');
-      reveal.className = 'answer-reveal';
-      reveal.textContent = `Answer: ${answer}`;
-      reveal.style.left = '50%';
-      reveal.style.top = '40%';
-      reveal.style.transform = 'translateX(-50%)';
-      stage.appendChild(reveal);
-      setTimeout(() => reveal.remove(), 1500);
-    }
-
-    // Special milestone celebrations
-    function celebrateMilestone(count) {
-      const celebration = document.createElement('div');
-      celebration.className = `milestone-celebration milestone-${count}`;
-      
-      const text = document.createElement('div');
-      text.className = 'milestone-text';
-      
-      if (count === 7) {
-        text.textContent = '7 in a row!\nAmazing!';
-      } else if (count === 10) {
-        text.textContent = '10 in a row!\nIncredible!';
-      } else if (count === 15) {
-        text.textContent = '15 in a row!\nUnstoppable!';
-      }
-      
-      celebration.appendChild(text);
-      
-      // Add confetti
-      for (let i = 0; i < 50; i++) {
-        const confetti = document.createElement('div');
-        confetti.className = 'confetti';
-        confetti.style.left = `${randInt(0, 100)}%`;
-        confetti.style.top = '-10px';
-        confetti.style.setProperty('--confetti-color', `hsl(${randInt(0, 360)}, 100%, 50%)`);
-        confetti.style.animationDuration = `${randFloat(1, 3)}s`;
-        confetti.style.animationDelay = `${randFloat(0, 0.5)}s`;
-        celebration.appendChild(confetti);
-      }
-      
-      // Add fireworks
-      for (let i = 0; i < 10; i++) {
-        setTimeout(() => {
-          const startX = randInt(20, 80);
-          const startY = randInt(20, 80);
-          
-          for (let j = 0; j < 20; j++) {
-            const firework = document.createElement('div');
-            firework.className = 'firework';
-            firework.style.left = `${startX}%`;
-            firework.style.top = `${startY}%`;
-            firework.style.backgroundColor = `hsl(${randInt(0, 360)}, 100%, 60%)`;
-            
-            const angle = randFloat(0, Math.PI * 2);
-            const distance = randFloat(30, 100);
-            const endX = Math.cos(angle) * distance;
-            const endY = Math.sin(angle) * distance;
-            
-            firework.style.setProperty('--startX', `0px`);
-            firework.style.setProperty('--startY', `0px`);
-            firework.style.setProperty('--endX', `${endX}px`);
-            firework.style.setProperty('--endY', `${endY}px`);
-            
-            celebration.appendChild(firework);
-          }
-        }, i * 100);
-      }
-      
-      document.body.appendChild(celebration);
-      setTimeout(() => {
-        celebration.remove();
-      }, 2500);
-    }
-
-    // --- Lives system ---
-    function updateLives() {
-      livesEl.innerHTML = '';
-      for (let i = 0; i < MAX_LIVES; i++) {
-        const heart = document.createElement('div');
-        heart.className = i >= lives ? 'heart lost' : 'heart';
-        livesEl.appendChild(heart);
-      }
-    }
-
-    function loseLife() {
-      lives--;
-      updateLives();
-        if (lives <= 0) {
-            gameOver();
-        }
-    }
-
-    function gameOver() {
-      gameActive = false;
-      acceptingInput = false;
-
-      // Clear all timeouts and bubbles
-      spawnTimeouts.forEach(timeout => clearTimeout(timeout));
-      spawnTimeouts = [];
-      stage.querySelectorAll('.bubble').forEach(bubble => bubble.remove());
-
-      showFeedback(`Game Over! Final Score: ${score}`, false);
-
-      // Show menu after a delay
-      setTimeout(() => {
-        showMenu();
-      }, 2000);
-    }
-
-    // --- Bubble creation ---
-function createBubble(value, isAnswer, isPowerUp = false, delay = 0, questionId, paletteFilter = '') {
-    if (!gameActive) return;
-
-    const timeout = setTimeout(() => {
-        if (!gameActive || gamePaused) return;
-
-        const bubble = document.createElement('div');
-        bubble.className = isPowerUp ? 'bubble power-up falling' : 'bubble falling';
-        bubble.dataset.value = String(value);
-        bubble.dataset.answer = isAnswer ? '1' : '0';
-        bubble.dataset.powerUp = isPowerUp ? '1' : '0';
-        bubble.dataset.questionId = questionId;
-
-        const size = randInt(60, 80);
-        bubble.style.width = size + 'px';
-        bubble.style.height = size + 'px';
-        bubble.style.left = getRandomX(size) + 'px';
-        bubble.style.top = '-150px';
-
-        const fallDuration = speeds[currentSpeed].duration;
-        bubble.style.animationDuration = fallDuration + 'ms';
-
-        // colour-coded per question (palette passed from generateQuestion)
-        bubble.style.filter = isPowerUp ? '' : paletteFilter;
-
-        // label (6/9 underlined)
-        const label = document.createElement('div');
-        label.className = 'label';
-        if (value === 6 || value === 9 || String(value).includes('6') || String(value).includes('9')) label.classList.add('underlined');
-        label.textContent = isPowerUp ? '✨' : value;
-        bubble.appendChild(label);
-
-        // micro click-wave on every press
-        bubble.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            const bRect = bubble.getBoundingClientRect();
-            const sRect = stage.getBoundingClientRect();
-            const cx = bRect.left - sRect.left + bRect.width / 2;
-            const cy = bRect.top - sRect.top + bRect.height / 2;
-            const wave = document.createElement('div');
-            wave.className = 'click-wave';
-            wave.style.left = cx + 'px';
-            wave.style.top = cy + 'px';
-            stage.appendChild(wave);
-            setTimeout(() => wave.remove(), 300);
-            onBubbleClick(bubble, size);
-        });
-
-        stage.appendChild(bubble);
-
-        /* ----- ghost bubble if correct answer falls off ----- */
-        setTimeout(() => {
-            if (!bubble.parentNode || !gameActive || gamePaused) return;
-            const bubQ = parseInt(bubble.dataset.questionId);
-            if (bubQ === rounds && isAnswer) {
-                loseLife(); streak = 0; rounds++; updateScore();
-                showFeedback('Missed!', false); showAnswerReveal(currentAnswer); stageFlash();
-                const ghost = document.createElement('div'); ghost.className = 'ghost';
-                ghost.style.left = bubble.style.left;
-                ghost.style.top = (window.innerHeight - 90) + 'px';
-                stage.appendChild(ghost); setTimeout(() => ghost.remove(), 1000);
-                setTimeout(() => { if (gameActive) generateQuestion(); }, 300);
-            }
-            bubble.remove();
-        }, fallDuration + 100);
-
-    }, delay);
-
-    spawnTimeouts.push(timeout);
+function getRandomX(bubbleSize) {
+  const stageWidth = window.innerWidth <= 768 ? 320 : 400;
+  return randInt(0, Math.max(0, stageWidth - bubbleSize));
 }
 
-    // Preload next question data
-    function preloadNextQuestion() {
-      const diff = difficulties[currentDifficulty];
-      const a = randInt(diff.min, diff.max);
-      const b = randInt(diff.min, diff.max);
-      const product = a * b;
+// Weighted pick for specials
+function weightedPick(items) {
+  const total = items.reduce((s, i) => s + i.w, 0);
+  let r = Math.random() * total;
+  for (const i of items) { if ((r -= i.w) <= 0) return i.t; }
+  return items[0].t;
+}
 
-      const set = new Set([product]);
-      const choiceCount = getChoicesCount();
+// --- Visual Effects Utils ---
+function getBubbleCenter(element) {
+  const b = element.getBoundingClientRect();
+  const s = stage.getBoundingClientRect();
+  return { x: b.left - s.left + b.width/2, y: b.top - s.top + b.height/2, w: b.width };
+}
 
-      // Generate plausible wrong answers
-      const neighbours = [
-        a * (b - 1), a * (b + 1),
-        (a - 1) * b, (a + 1) * b,
-        product - a, product + a,
-        product - b, product + b,
-      ].filter(n => Number.isFinite(n) && n > 0);
+function createClickWave(x, y) {
+  const wave = document.createElement('div');
+  wave.className = 'click-wave';
+  wave.style.left = `${x}px`;
+  wave.style.top = `${y}px`;
+  stage.appendChild(wave);
+  setTimeout(() => wave.remove(), 300);
+}
 
-      for (const n of neighbours) if (set.size < choiceCount) set.add(n);
+function makeRipple(x, y) { 
+  const ring = document.createElement('div'); 
+  ring.className='ring'; 
+  ring.style.left=x+'px'; 
+  ring.style.top=y+'px'; 
+  stage.appendChild(ring); 
+  setTimeout(()=>ring.remove(),320); 
+}
 
-      while (set.size < choiceCount) {
-        const x = randInt(diff.min, diff.max);
-        const y = randInt(diff.min, diff.max);
-        if (x * y !== product) set.add(x * y);
+function makeParticles(x, y, baseSize, isStreak = false) {
+  if (isStreak && streak >= 3) { makeExplosion(x, y, baseSize); return; }
+  const count = randInt(8, 12);
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    const angle = randFloat(0, Math.PI * 2);
+    const dist = randFloat(baseSize * 0.3, baseSize * 0.8);
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist;
+    p.style.setProperty('--dx', dx.toFixed(1) + 'px');
+    p.style.setProperty('--dy', dy.toFixed(1) + 'px');
+    const hue = randInt(180, 220);
+    const sat = randInt(60, 85);
+    p.style.background = `radial-gradient(circle at 30% 30%, hsla(${hue},100%,98%,0.95), hsla(${hue}, ${sat}%, 70%, 0.9))`;
+    stage.appendChild(p);
+    setTimeout(() => p.remove(), 420);
+  }
+}
+
+function makeExplosion(x, y, baseSize) {
+  document.body.classList.add('screen-shake');
+  setTimeout(() => document.body.classList.remove('screen-shake'), 400);
+  const shockwave = document.createElement('div'); 
+  shockwave.className='shockwave'; 
+  shockwave.style.left = x+'px'; 
+  shockwave.style.top = y+'px'; 
+  stage.appendChild(shockwave); 
+  setTimeout(() => shockwave.remove(), 600);
+  const fireCount = randInt(15, 20);
+  for (let i = 0; i < fireCount; i++) {
+    const p = document.createElement('div'); 
+    p.className='explosion-particle fire'; 
+    p.style.left = x+'px'; 
+    p.style.top = y+'px';
+    const angle = randFloat(0, Math.PI * 2); 
+    const dist = randFloat(baseSize * 0.8, baseSize * 1.5);
+    const dx = Math.cos(angle) * dist; 
+    const dy = Math.sin(angle) * dist;
+    p.style.setProperty('--dx', dx.toFixed(1) + 'px'); 
+    p.style.setProperty('--dy', dy.toFixed(1) + 'px');
+    stage.appendChild(p); 
+    setTimeout(() => p.remove(), 800);
+  }
+  const sparkCount = randInt(12, 18);
+  for (let i = 0; i < sparkCount; i++) {
+    const p = document.createElement('div'); 
+    p.className='explosion-particle spark'; 
+    p.style.left = x+'px'; 
+    p.style.top = y+'px';
+    const angle = randFloat(0, Math.PI * 2); 
+    const dist = randFloat(baseSize * 1.2, baseSize * 2);
+    const dx = Math.cos(angle) * dist; 
+    const dy = Math.sin(angle) * dist;
+    p.style.setProperty('--dx', dx.toFixed(1) + 'px'); 
+    p.style.setProperty('--dy', dy.toFixed(1) + 'px');
+    stage.appendChild(p); 
+    setTimeout(() => p.remove(), 900);
+  }
+  const smokeCount = randInt(6, 10);
+  for (let i = 0; i < smokeCount; i++) {
+    const p = document.createElement('div'); 
+    p.className='explosion-particle smoke'; 
+    p.style.left = x+'px'; 
+    p.style.top = y+'px';
+    const angle = randFloat(0, Math.PI * 2); 
+    const dist = randFloat(baseSize * 0.4, baseSize * 1);
+    const dx = Math.cos(angle) * dist; 
+    const dy = Math.sin(angle) * dist;
+    p.style.setProperty('--dx', dx.toFixed(1) + 'px'); 
+    p.style.setProperty('--dy', dy.toFixed(1) + 'px');
+    stage.appendChild(p); 
+    setTimeout(() => p.remove(), 1200);
+  }
+}
+
+function stageFlash(){ 
+  const f = document.createElement('div'); 
+  f.className='flash'; 
+  stage.appendChild(f); 
+  setTimeout(()=>f.remove(),240); 
+}
+
+function showFeedback(text, isCorrect){ 
+  feedbackEl.textContent = text; 
+  feedbackEl.style.color = isCorrect ? 'var(--correct)' : 'var(--wrong)'; 
+  feedbackEl.classList.add('show'); 
+  setTimeout(()=>feedbackEl.classList.remove('show'), 600); 
+}
+
+function showAnswerReveal(answer) {
+  const reveal = document.createElement('div'); 
+  reveal.className = 'answer-reveal'; 
+  reveal.textContent = `Answer: ${answer}`;
+  reveal.style.left = '50%'; 
+  reveal.style.top = '40%'; 
+  reveal.style.transform = 'translateX(-50%)';
+  stage.appendChild(reveal); 
+  setTimeout(() => reveal.remove(), 1500);
+}
+
+function celebrateMilestone(count) {
+  const celebration = document.createElement('div'); 
+  celebration.className = `milestone-celebration milestone-${count}`;
+  const text = document.createElement('div'); 
+  text.className = 'milestone-text';
+  if (count === 7) text.textContent = '7 in a row!\nAmazing!';
+  else if (count === 10) text.textContent = '10 in a row!\nIncredible!';
+  else if (count === 15) text.textContent = '15 in a row!\nUnstoppable!';
+  celebration.appendChild(text);
+  for (let i = 0; i < 50; i++) {
+    const confetti = document.createElement('div'); 
+    confetti.className='confetti';
+    confetti.style.left = `${randInt(0, 100)}%`; 
+    confetti.style.top = '-10px';
+    confetti.style.setProperty('--confetti-color', `hsl(${randInt(0, 360)}, 100%, 50%)`);
+    confetti.style.animationDuration = `${randFloat(1, 3)}s`; 
+    confetti.style.animationDelay = `${randFloat(0, 0.5)}s`;
+    celebration.appendChild(confetti);
+  }
+  for (let i = 0; i < 10; i++) {
+    setTimeout(() => {
+      const startX = randInt(20, 80), startY = randInt(20, 80);
+      for (let j = 0; j < 20; j++) {
+        const firework = document.createElement('div'); 
+        firework.className='firework';
+        firework.style.left = `${startX}%`; 
+        firework.style.top = `${startY}%`;
+        firework.style.backgroundColor = `hsl(${randInt(0, 360)}, 100%, 60%)`;
+        const angle = randFloat(0, Math.PI * 2); 
+        const distance = randFloat(30, 100);
+        firework.style.setProperty('--startX','0px'); 
+        firework.style.setProperty('--startY','0px');
+        firework.style.setProperty('--endX', `${Math.cos(angle)*distance}px`);
+        firework.style.setProperty('--endY', `${Math.sin(angle)*distance}px`);
+        celebration.appendChild(firework);
       }
+    }, i * 100);
+  }
+  document.body.appendChild(celebration); 
+  setTimeout(() => celebration.remove(), 2500);
+}
 
-      const choices = Array.from(set).sort(() => Math.random() - 0.5);
+// ---------- Lives ----------
+function updateLives() {
+  livesEl.innerHTML = '';
+  for (let i = 0; i < MAX_LIVES; i++) {
+    const heart = document.createElement('div');
+    heart.className = i >= lives ? 'heart lost' : 'heart';
+    livesEl.appendChild(heart);
+  }
+}
 
-      // Sometimes add a power-up bubble (15% chance when streak >= 3)
-      const shouldAddPowerUp = streak >= 3 && Math.random() < 0.15;
+function loseLife() {
+  lives--;
+  updateLives();
+  if (lives <= 0) gameOver();
+}
 
-      nextQuestionData = {
-        a, b, product, choices, shouldAddPowerUp
-      };
+// ---------- BUBBLE OOP LAYER ----------
+class BubbleRegistry {
+  static items = new Set();
+  static add(b) { this.items.add(b); }
+  static remove(b) { this.items.delete(b); }
+  static forQuestion(qId) { return [...this.items].filter(b => b.questionId === qId); }
+  static answersOnly(qId) { return this.forQuestion(qId).filter(b => !b.isSpecial); }
+  static expireOld(currentRound) { this.items.forEach(b => { if (b.questionId < currentRound) b.expire(); }); }
+  static pauseAll() { this.items.forEach(b => b.setPaused(true)); }
+  static resumeAll() { this.items.forEach(b => b.setPaused(false)); }
+  static destroyAll() { this.items.forEach(b => b.destroy()); this.items.clear(); }
+}
+
+class Bubble {
+  constructor({ value, isAnswer=false, isPowerUp=false, questionId, paletteFilter='', fallMs=null, size=null, labelOverride=null, classes=[] }) {
+    this.value = value;
+    this.isAnswer = isAnswer;
+    this.isPowerUp = isPowerUp;
+    this.questionId = questionId;
+    this.isSpecial = false;
+
+    this.size = size ?? randInt(60, 80);
+    this.fallMs = fallMs ?? this.calculateFallDuration();
+    this.paletteFilter = paletteFilter;
+
+    this.el = this.buildElement(labelOverride, classes);
+    this.missTimer = null;
+
+    BubbleRegistry.add(this);
+    this.armMissTimer();
+  }
+
+  calculateFallDuration() {
+    const base = speeds[currentSpeed].duration;
+    const jitter = randInt(-200, 700);
+    return Math.max(2500, base + jitter);
+  }
+
+  buildElement(labelOverride, classes) {
+    const el = document.createElement('div');
+    el.className = `bubble falling ${classes.join(' ')}`.trim();
+    el.dataset.value = String(this.value);
+    el.dataset.answer = this.isAnswer ? '1' : '0';
+    el.dataset.powerUp = this.isPowerUp ? '1' : '0';
+    el.dataset.questionId = this.questionId;
+
+    el.style.width = el.style.height = `${this.size}px`;
+    el.style.left = `${getRandomX(this.size)}px`;
+    el.style.top = '-150px';
+    el.style.willChange = 'transform, opacity';
+    el.style.transform = 'translate3d(0,0,0)';
+    el.style.setProperty('--fallMs', `${this.fallMs}ms`);
+    if (!this.isPowerUp) el.style.filter = this.paletteFilter;
+
+    const label = document.createElement('div');
+    label.className = 'label';
+    if (String(this.value).includes('6') || String(this.value).includes('9')) label.classList.add('underlined');
+    label.textContent = labelOverride ?? this.value;
+    el.appendChild(label);
+
+    // Support both pointer and programmatic .click()
+    el.addEventListener('pointerdown', (e)=>{ e.preventDefault(); this.handleClick(); });
+    el.addEventListener('click', ()=> this.handleClick());
+
+    stage.appendChild(el);
+    return el;
+  }
+
+  setPaused(paused) { 
+    this.el.style.animationPlayState = paused ? 'paused' : 'running'; 
+  }
+
+  expire() { 
+    this.el.classList.add('expired'); 
+  }
+
+  clearMissTimer() { 
+    if (this.missTimer) { 
+      clearTimeout(this.missTimer); 
+      this.missTimer = null; 
+    } 
+  }
+
+  armMissTimer() {
+    this.clearMissTimer();
+    this.missTimer = setTimeout(() => {
+      if (!this.el.parentNode || !gameActive || gamePaused) return;
+      if (this.questionId === rounds && this.isAnswer) {
+        loseLife();
+        streak = 0;
+        rounds++;
+        updateScore();
+        showFeedback('Missed!', false);
+        showAnswerReveal(currentAnswer);
+        stageFlash();
+        const ghost = document.createElement('div');
+        ghost.className = 'ghost';
+        ghost.style.left = this.el.style.left;
+        ghost.style.top = (window.innerHeight - 90) + 'px';
+        stage.appendChild(ghost);
+        setTimeout(() => ghost.remove(), 1000);
+        setTimeout(() => { if (gameActive) generateQuestion(); }, 300);
+      }
+      this.destroy();
+    }, this.fallMs + 120);
+  }
+
+  handleClick() {
+    if (!acceptingInput || !gameActive || gamePaused) return;
+    const { x, y, w } = getBubbleCenter(this.el);
+    if (navigator.vibrate) navigator.vibrate(this.isAnswer ? 20 : [60, 30, 30]);
+
+    this.el.classList.remove('falling'); 
+    void this.el.offsetWidth;
+
+    if (this.isAnswer) {
+      acceptingInput = false;
+      this.el.classList.add('correct');
+
+      const points = this.isPowerUp ? 3 : 1;
+      score += points; 
+      correct++; 
+      streak++; 
+      rounds++;
+      
+      if (streak === 7 || streak === 10 || streak === 15) celebrateMilestone(streak);
+      if (streak > bestStreak) { 
+        bestStreak = streak; 
+        localStorage.setItem('bestStreak', bestStreak); 
+      }
+      updateScore();
+
+      requestAnimationFrame(() => {
+        createClickWave(x, y);
+        makeRipple(x, y);
+        makeParticles(x, y, w, streak >= STREAK_THRESHOLD);
+        stageFlash();
+        showFeedback(this.isPowerUp ? `Power Up! +${points} points!` :
+                      (streak >= STREAK_THRESHOLD ? `${streak} streak!` : 'Correct!'), true);
+      });
+
+      this.el.addEventListener('animationend', () => this.destroy(), { once: true });
+      setTimeout(() => { if (gameActive) { acceptingInput = true; generateQuestion(); } }, 320);
+
+    } else {
+      streak = 0; 
+      loseLife(); 
+      updateScore();
+      this.el.classList.add('wrong');
+      requestAnimationFrame(() => { 
+        stageFlash(); 
+        showFeedback('Wrong!', false); 
+      });
+      this.el.addEventListener('animationend', () => this.destroy(), { once: true });
     }
+  }
+
+  destroy() {
+    this.clearMissTimer();
+    if (this.el && this.el.parentNode) this.el.remove();
+    BubbleRegistry.remove(this);
+  }
+}
+
+class SpecialBubble extends Bubble {
+  constructor({ type, questionId, fallMs }) {
+    const size = randInt(54, 68);
+    const labelMap = { skip: '⏭', prune: '➖', slow: '🕓' };
+    
+    // Calculate fall duration here if not provided
+    const calculatedFallMs = fallMs ?? (() => {
+      const base = speeds[currentSpeed].duration;
+      return Math.max(1200, Math.floor(base * 0.55) + randInt(-200, 150));
+    })();
+    
+    super({
+      value: null,
+      isAnswer: false,
+      isPowerUp: false,
+      questionId,
+      paletteFilter: '',
+      fallMs: calculatedFallMs,
+      size,
+      labelOverride: labelMap[type] || '★',
+      classes: ['special', `special-${type}`]
+    });
+    this.type = type;
+    this.isSpecial = true;
+
+    const aura = document.createElement('div'); 
+    aura.className = 'aura'; 
+    this.el.appendChild(aura);
+  }
+
+  handleClick() {
+    if (!gameActive || gamePaused) return;
+    const { x, y, w } = getBubbleCenter(this.el);
+    this.el.classList.remove('falling'); 
+    void this.el.offsetWidth;
+    this.el.classList.add('correct');
+    this.el.addEventListener('animationend', () => this.destroy(), { once: true });
+
+    makeRipple(x, y); 
+    makeParticles(x, y, w, true); 
+    stageFlash();
+
+    if (this.type === 'skip') {
+      showFeedback('⏭ Skipped!', true); 
+      performSkip();
+    } else if (this.type === 'prune') {
+      showFeedback(`➖ Removed ${PRUNE_COUNT}`, true); 
+      performPrune(PRUNE_COUNT);
+    } else if (this.type === 'slow') {
+      showFeedback('🕓 Time Freeze!', true); 
+      bulletTime(FREEZE_MS);
+    }
+  }
+}
+
+// ---------- Menu / prefs ----------
+function updateMenuStats() {
+  document.getElementById('bestScoreStat').textContent = highScore;
+  document.getElementById('bestStreakStat').textContent = bestStreak;
+}
+
+function setMenuDifficulty(level) {
+  currentDifficulty = level;
+  ['menuEasyBtn','menuMediumBtn','menuHardBtn'].forEach(id => {
+    const el = document.getElementById(id); 
+    if (el) el.classList.remove('active');
+  });
+  const btnId = 'menu' + level.charAt(0).toUpperCase() + level.slice(1) + 'Btn';
+  const el = document.getElementById(btnId); 
+  if (el) el.classList.add('active');
+  localStorage.setItem('difficulty', currentDifficulty);
+}
+
+function setMenuSpeed(speed) {
+  currentSpeed = speed;
+  ['menuSlowBtn','menuNormalBtn','menuFastBtn','menuCrazyBtn'].forEach(id => {
+    const el = document.getElementById(id); 
+    if (el) el.classList.remove('active');
+  });
+  const btnId = 'menu' + speed.charAt(0).toUpperCase() + speed.slice(1) + 'Btn';
+  const el = document.getElementById(btnId); 
+  if (el) el.classList.add('active');
+  localStorage.setItem('speed', currentSpeed);
+}
+
+function initPreferences() {
+  setMenuDifficulty(currentDifficulty);
+  setMenuSpeed(currentSpeed);
+  const keysMax = document.getElementById('helpKeysMax');
+  if (keysMax) keysMax.textContent = String(getChoicesCount());
+}
+
+function showMenu() {
+  gameActive = false;
+  gamePaused = true;
+  const card = document.querySelector('.recap-card');
+  if (card) card.remove();
+
+  spawnTimeouts.forEach(timeout => clearTimeout(timeout));
+  spawnTimeouts = [];
+
+  // Kill all bubbles via registry
+  BubbleRegistry.destroyAll();
+
+  hud.classList.remove('visible');
+  gameControls.classList.remove('visible');
+  livesEl.classList.remove('visible');
+
+  menuOverlay.classList.remove('hidden');
+  updateMenuStats();
+}
+
+function startGame() {
+  menuOverlay.classList.add('hidden');
+
+  setTimeout(() => {
+    hud.classList.add('visible');
+    gameControls.classList.add('visible');
+    livesEl.classList.add('visible');
+  }, 300);
+
+  resetGame();
+
+  gameActive = true;
+  gamePaused = false;
+
+  preloadNextQuestion();
+  generateQuestion();
+}
+
+function pauseGame() {
+  if (!gameActive) return;
+  gamePaused = !gamePaused;
+  const pauseBtn = document.getElementById('pauseBtn');
+  if (gamePaused) {
+    pauseBtn.textContent = 'Resume';
+    BubbleRegistry.pauseAll();
+  } else {
+    pauseBtn.textContent = 'Pause';
+    BubbleRegistry.resumeAll();
+  }
+}
+
+// ---------- Specials: spawn + actions ----------
+function maybeSpawnSpecial(choiceCount) {
+  if (Math.random() > SPECIAL_CHANCE) return;
+  const type = weightedPick([
+    { t: 'skip',  w: 0.4 },
+    { t: 'prune', w: 0.35 },
+    { t: 'slow',  w: 0.25 },
+  ]);
+  const jitterDelay = randInt(0, SPAWN_DELAY * Math.max(1, choiceCount - 1));
+  spawnSpecial(type, jitterDelay);
+}
+
+function spawnSpecial(type, delay = 0) {
+  const qId = rounds;
+  const timeout = setTimeout(() => {
+    if (!gameActive || gamePaused) return;
+    new SpecialBubble({ type, questionId: qId });
+  }, delay);
+  spawnTimeouts.push(timeout);
+}
+
+function performSkip() {
+  // Pop all current-question answer bubbles (keep it visually satisfying)
+  const current = BubbleRegistry.answersOnly(rounds);
+  current.forEach(b => b.el.classList.contains('expired') ? b.destroy()
+                                                         : b.el.classList.add('correct') || b.el.addEventListener('animationend', () => b.destroy(), { once: true }));
+  rounds++;
+  updateScore();
+  preloadNextQuestion();
+  setTimeout(() => gameActive && generateQuestion(), 240);
+}
+
+function performPrune(n = 2) {
+  const wrongs = BubbleRegistry.answersOnly(rounds)
+    .filter(b => !b.isAnswer && !b.el.classList.contains('expired'));
+  for (let i = 0; i < n && wrongs.length; i++) {
+    const idx = randInt(0, wrongs.length - 1);
+    const b = wrongs.splice(idx, 1)[0];
+    b.el.classList.remove('falling'); 
+    void b.el.offsetWidth;
+    b.el.classList.add('correct');
+    b.el.addEventListener('animationend', () => b.destroy(), { once: true });
+  }
+}
+
+function bulletTime(ms = FREEZE_MS) {
+  document.body.classList.add('bullet-time');
+  BubbleRegistry.pauseAll();
+  setTimeout(() => {
+    BubbleRegistry.resumeAll();
+    document.body.classList.remove('bullet-time');
+  }, ms);
+}
+
+// ---------- Question lifecycle ----------
+function preloadNextQuestion() {
+  const diff = difficulties[currentDifficulty];
+  const a = randInt(diff.min, diff.max);
+  const b = randInt(diff.min, diff.max);
+  const product = a * b;
+
+  const set = new Set([product]);
+  const choiceCount = getChoicesCount();
+
+  const neighbours = [
+    a * (b - 1), a * (b + 1),
+    (a - 1) * b, (a + 1) * b,
+    product - a, product + a,
+    product - b, product + b,
+  ].filter(n => Number.isFinite(n) && n > 0);
+
+  for (const n of neighbours) if (set.size < choiceCount) set.add(n);
+
+  while (set.size < choiceCount) {
+    const x = randInt(diff.min, diff.max);
+    const y = randInt(diff.min, diff.max);
+    if (x * y !== product) set.add(x * y);
+  }
+
+  const choices = Array.from(set).sort(() => Math.random() - 0.5);
+  const shouldAddPowerUp = streak >= 3 && Math.random() < 0.15;
+
+  nextQuestionData = { a, b, product, choices, shouldAddPowerUp };
+}
 
 function generateQuestion() {
-    if (!gameActive || gamePaused) return;
+  if (!gameActive || gamePaused) return;
+  if (!nextQuestionData) preloadNextQuestion();
 
-    // use pre-loaded data (or create it)
-    if (!nextQuestionData) preloadNextQuestion();
-    const { a, b, product, choices, shouldAddPowerUp } = nextQuestionData;
-    currentAnswer = product;
+  const { a, b, product, choices, shouldAddPowerUp } = nextQuestionData;
+  currentAnswer = product;
 
-    // update UI
-    qEl.textContent = `${a} × ${b} = ?`;
-    questionHue = (questionHue + 40) % 360;
-    document.documentElement.style.setProperty('--question-hue', `${questionHue}deg`);
+  qEl.textContent = `${a} × ${b} = ?`;
+  questionHue = (questionHue + 40) % 360;
+  document.documentElement.style.setProperty('--question-hue', `${questionHue}deg`);
 
-    /* ----- expire old bubbles (visual + DOM clean-up) ----- */
-    stage.querySelectorAll('.bubble').forEach(bub => {
-        const bubQ = parseInt(bub.dataset.questionId);
-        if (bubQ < rounds) bub.classList.add('expired');
-    });
-    setTimeout(() => stage.querySelectorAll('.bubble.expired').forEach(b => b.remove()), 600);
+  // Visually expire older bubbles via registry
+  BubbleRegistry.expireOld(rounds);
 
-    /* ----- spawn new bubble set (with colour palette) ----- */
-    const palette = [
-        'hue-rotate(0deg) saturate(1.1)',
-        'hue-rotate(60deg) saturate(1.2)',
-        'hue-rotate(160deg) saturate(1.1)',
-        'hue-rotate(220deg) saturate(1.3)',
-        'hue-rotate(280deg) saturate(1.2)'
-    ];
-    choices.forEach((val, idx) => {
-        const isAnswer = val === product;
-        const isPowerUp = shouldAddPowerUp && isAnswer;
-        const delay = idx * SPAWN_DELAY;
+  const palette = [
+    'hue-rotate(0deg) saturate(1.1)',
+    'hue-rotate(60deg) saturate(1.2)',
+    'hue-rotate(160deg) saturate(1.1)',
+    'hue-rotate(220deg) saturate(1.3)',
+    'hue-rotate(280deg) saturate(1.2)'
+  ];
 
-        // pass palette filter down so createBubble can use it
-        createBubble(val, isAnswer, isPowerUp, delay, rounds, palette[rounds % palette.length]);
-    });
+  // Spawn answer/wrong set - directly instantiate bubbles
+  choices.forEach((val, idx) => {
+    const isAnswer = val === product;
+    const isPowerUp = shouldAddPowerUp && isAnswer;
+    const delay = idx * SPAWN_DELAY;
+    
+    const timeout = setTimeout(() => {
+      if (!gameActive || gamePaused) return;
+      new Bubble({ 
+        value: val, 
+        isAnswer, 
+        isPowerUp, 
+        questionId: rounds, 
+        paletteFilter: palette[rounds % palette.length] 
+      });
+    }, delay);
+    spawnTimeouts.push(timeout);
+  });
 
-    preloadNextQuestion(); // preload next while player plays
+  // Occasionally drop a special
+  maybeSpawnSpecial(choices.length);
+
+  preloadNextQuestion();
 }
 
-    function onBubbleClick(bubble, size) {
-    if (!acceptingInput || !gameActive || gamePaused) return;
+// ---------- Score / game over ----------
+function updateScore() {
+  const hue = 160 + Math.min(140, score / 3);
+  document.body.style.setProperty('--hue', hue);
+  const acc = rounds ? Math.round((correct / rounds) * 100) : 0;
+  if (scorePrimaryEl) scorePrimaryEl.textContent = `Score: ${score} • Round: ${rounds}`;
+  if (scoreSubEl) scoreSubEl.textContent = `Accuracy: ${acc}% • Best: ${highScore}`;
 
-    // 1. calculate centre FIRST
-    const bRect = bubble.getBoundingClientRect();
-    const sRect = stage.getBoundingClientRect();
-    const cx = bRect.left - sRect.left + bRect.width / 2;
-    const cy = bRect.top - sRect.top + bRect.height / 2;
+  const percent = Math.min(100, (streak / 3) * 100);
+  const bar = document.getElementById('streakFill');
+  bar.style.width = percent + '%';
+  document.querySelector('.streak-bar').classList.toggle('show', streak > 0);
 
-    // 2. micro click-wave (now safe)
-    const wave = document.createElement('div');
-    wave.className = 'click-wave';
-    wave.style.left = cx + 'px';
-    wave.style.top = cy + 'px';
-    stage.appendChild(wave);
-    setTimeout(() => wave.remove(), 300);
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem('highScore', highScore.toString());
+    const toast = document.getElementById('highScoreToast');
+    if (toast) { toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 1200); }
+  }
 
-    // 3. game logic
-    const value = parseInt(bubble.dataset.value);
-    const isCorrect = value === currentAnswer;
-    const isPowerUp = bubble.dataset.powerUp === '1';
+  if (streak >= STREAK_THRESHOLD) {
+    streakEl.textContent = `🔥 Streak: ${streak} (Best: ${bestStreak})`;
+    streakEl.classList.add('show');
+  } else {
+    streakEl.classList.remove('show');
+  }
+}
 
-    // Haptics (if supported)
-    if (navigator.vibrate) {
-      if (isCorrect) navigator.vibrate(20); else navigator.vibrate([60,30,30]);
-    }
+function gameOver() {
+  gameActive = false;
+  acceptingInput = false;
 
-    if (isCorrect) {
-        acceptingInput = false;
-        const points = isPowerUp ? 3 : 1;
-        score += points; correct++; streak++; rounds++;
-        if (streak === 7 || streak === 10 || streak === 15) celebrateMilestone(streak);
-        if (streak > bestStreak) {
-        bestStreak = streak;
-        localStorage.setItem('bestStreak', bestStreak);
-        }
-        updateScore();
-        makeRipple(cx, cy);
-        makeParticles(cx, cy, bRect.width, streak >= STREAK_THRESHOLD);
-        bubble.classList.remove('falling');
-        bubble.classList.add('correct');
-        showFeedback(isPowerUp ? `Power Up! +${points} points!` : streak >= STREAK_THRESHOLD ? `${streak} streak!` : 'Correct!', true);
-        setTimeout(() => bubble.remove(), 300);
-        stageFlash();
-        setTimeout(() => { if (gameActive) { acceptingInput = true; generateQuestion(); } }, 500);
-    } else {
-        streak = 0; loseLife(); updateScore();
-        bubble.classList.remove('falling');
-        bubble.classList.add('wrong');
-        showFeedback('Wrong!', false);
-        setTimeout(() => bubble.remove(), 400);
-        stageFlash();
-    }
-    }
+  spawnTimeouts.forEach(t => clearTimeout(t));
+  spawnTimeouts = [];
+  BubbleRegistry.destroyAll();
 
+  // Recap card
+  const card = document.createElement('div');
+  card.className = 'recap-card';
+  card.innerHTML = `
+    <h2>Great job!</h2>
+    <p>Score <b>${score}</b></p>
+    <p>Best streak <b>${streak}</b></p>
+    <p>Accuracy <b>${Math.round((correct/rounds)*100)||0}%</b></p>
+    <button onclick="showMenu()">Menu</button>
+  `;
+  document.body.appendChild(card);
+  requestAnimationFrame(() => card.classList.add('show'));
+  setTimeout(() => { const c = document.querySelector('.recap-card'); if (c) c.remove(); }, 4000);
+}
 
-    function updateScore() {
-        // in updateScore()
-        const hue = 160 + Math.min(140, score / 3); // 160-300 deg
-        document.body.style.setProperty('--hue', hue);
-      const acc = rounds ? Math.round((correct / rounds) * 100) : 0;
-      if (scorePrimaryEl) scorePrimaryEl.textContent = `Score: ${score} • Round: ${rounds}`;
-      if (scoreSubEl) scoreSubEl.textContent = `Accuracy: ${acc}% • Best: ${highScore}`;
-        // in updateScore()
-        const percent = Math.min(100, (streak / 3) * 100);
-        const bar = document.getElementById('streakFill');
-        bar.style.width = percent + '%';
-        document.querySelector('.streak-bar').classList.toggle('show', streak > 0);
-      if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('highScore', highScore.toString());
-        const toast = document.getElementById('highScoreToast');
-        if (toast) { toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 1200); }
-      }
+function resetGame() {
+  spawnTimeouts.forEach(timeout => clearTimeout(timeout));
+  spawnTimeouts = [];
 
-      // Update streak indicator
-      if (streak >= STREAK_THRESHOLD) {
-        streakEl.textContent = `🔥 Streak: ${streak} (Best: ${bestStreak})`;
-        streakEl.classList.add('show');
-      } else {
-        streakEl.classList.remove('show');
-      }
-    }
-    function gameOver() {
-        gameActive = false;
-        acceptingInput = false;
-        spawnTimeouts.forEach(t => clearTimeout(t));
-        spawnTimeouts = [];
-        stage.querySelectorAll('.bubble').forEach(b => b.remove());
+  score = 0; rounds = 0; correct = 0; streak = 0; lives = MAX_LIVES;
+  acceptingInput = true; gamePaused = false;
+  nextQuestionData = null; questionHue = 200;
 
-        // Recap card
-        const card = document.createElement('div');
-        card.className = 'recap-card';
-        card.innerHTML = `
-            <h2>Great job!</h2>
-            <p>Score <b>${score}</b></p>
-            <p>Best streak <b>${streak}</b></p>
-            <p>Accuracy <b>${Math.round((correct/rounds)*100)||0}%</b></p>
-            <button onclick="showMenu()">Menu</button>
-        `;
-        document.body.appendChild(card);
+  BubbleRegistry.destroyAll();
 
-        // Animate in
-        requestAnimationFrame(() => card.classList.add('show'));
-        // remove recap card after 4 s (or tweak to taste)
-        setTimeout(() => {
-        const card = document.querySelector('.recap-card');
-        if (card) card.remove();
-        }, 4000);
-    }
+  updateScore();
+  updateLives();
 
-    function resetGame() {
-      // Clear timeouts
-      spawnTimeouts.forEach(timeout => clearTimeout(timeout));
-      spawnTimeouts = [];
+  qEl.textContent = 'Ready?';
+  document.getElementById('pauseBtn').textContent = 'Pause';
+}
 
-      // Reset state
-      score = 0;
-      rounds = 0;
-      correct = 0;
-      streak = 0;
-      lives = MAX_LIVES;
-      acceptingInput = true;
-      gamePaused = false;
-      nextQuestionData = null;
-      questionHue = 200;
+// ---------- Keyboard controls ----------
+document.addEventListener('keydown', (e) => {
+  if (!gameActive || gamePaused) return;
 
-      // Clear stage
-      stage.querySelectorAll('.bubble').forEach(b => b.remove());
+  const maxKey = getChoicesCount();
+  if (e.key >= '1' && e.key <= String(maxKey)) {
+    // Left→right among *answer/wrong* bubbles for current question (exclude specials)
+    const arr = BubbleRegistry.answersOnly(rounds)
+      .filter(b => !b.el.classList.contains('expired'));
+    arr.sort((a, b) => parseFloat(a.el.style.left) - parseFloat(b.el.style.left));
 
-      updateScore();
-      updateLives();
+    const index = parseInt(e.key, 10) - 1;
+    const target = arr[index];
+    if (target) target.handleClick();
+  } else if (e.key === ' ') {
+    e.preventDefault();
+    const target = BubbleRegistry.answersOnly(rounds).find(b => b.isAnswer);
+    if (target) target.handleClick();
+  } else if (e.key === 'p' || e.key === 'P') {
+    pauseGame();
+  } else if (e.key === 'Escape') {
+    showMenu();
+  }
+});
 
-      qEl.textContent = 'Ready?';
-      document.getElementById('pauseBtn').textContent = 'Pause';
-    }
+// Prevent context menu on touch devices
+document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    // --- Keyboard controls ---
-    document.addEventListener('keydown', (e) => {
-      if (!gameActive || gamePaused) return;
+// Resize safety (keep your behavior)
+window.addEventListener('resize', () => {
+  const sw = stage.clientWidth;
+  document.querySelectorAll('.bubble').forEach(b => {
+    const w = b.offsetWidth;
+    const currentX = parseFloat(b.style.left) || 0;
+    const newX = Math.min(currentX, Math.max(0, sw - w));
+    b.style.left = newX + 'px';
+  });
+});
 
-      const maxKey = getChoicesCount();
-      if (e.key >= '1' && e.key <= String(maxKey)) {
-        const bubbles = Array.from(stage.querySelectorAll('.bubble'))
-          .filter(b => parseInt(b.dataset.questionId) === rounds);
-        const index = parseInt(e.key) - 1;
-        if (bubbles[index]) {
-            bubbles[index].click();
-        }
-      } else if (e.key === ' ') {
-        e.preventDefault();
-        // Space bar clicks the correct answer bubble
-        const correctBubble = stage.querySelector('.bubble[data-answer="1"][data-question-id="' + rounds + '"]');
-        if (correctBubble) {
-            correctBubble.click();
-        }
-      } else if (e.key === 'p' || e.key === 'P') {
-        pauseGame();
-      } else if (e.key === 'Escape') {
-        showMenu();
-      }
-    });
+function toggleHelp() {
+  const el = document.getElementById('helpOverlay');
+  el.classList.toggle('hidden');
+  const keysMax = document.getElementById('helpKeysMax');
+  if (keysMax) keysMax.textContent = String(getChoicesCount());
+}
 
-    // Prevent context menu on touch devices
-    document.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-    });
+// ---------- Initialize ----------
+initPreferences();
+updateMenuStats();
+resetGame();
+</script>
 
-    // --- Resize safety ---
-    window.addEventListener('resize', () => {
-      const sw = stage.clientWidth;
-      stage.querySelectorAll('.bubble').forEach(b => {
-        const w = b.offsetWidth;
-        const currentX = parseFloat(b.style.left) || 0;
-        const newX = Math.min(currentX, Math.max(0, sw - w));
-        b.style.left = newX + 'px';
-      });
-    });
-
-    function toggleHelp() {
-      const el = document.getElementById('helpOverlay');
-      el.classList.toggle('hidden');
-      // refresh key hint
-      const keysMax = document.getElementById('helpKeysMax');
-      if (keysMax) keysMax.textContent = String(getChoicesCount());
-    }
-
-    // --- Initialize ---
-    initPreferences();
-    updateMenuStats();
-    resetGame();
-  </script>
 </body>
 </html>
-
